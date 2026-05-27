@@ -1,52 +1,20 @@
-export interface GameDefinition {
-  version: string;
-  map: GameMap;
-  units: UnitDefinition[];
-  waves: WaveDefinition[];
-  triggers: TriggerDefinition[];
-}
+import type { TileKind } from "./types";
 
-export interface GameMap {
-  id: string;
-  name: string;
-  size: MapSize;
-  tiles: MapTile[];
-  paths: PathDefinition[];
-  towerSlots: TowerSlotDefinition[];
-}
-
-export interface MapSize {
-  width: number;
-  height: number;
-}
-
-export type TileKind = "ground" | "path" | "tower-slot" | "blocked";
-
-export interface MapTile {
-  x: number;
-  y: number;
-  kind: TileKind;
-}
-
-export interface PathDefinition {
-  id: string;
-  points: MapPoint[];
-}
-
-export interface MapPoint {
-  x: number;
-  y: number;
-}
-
-export interface TowerSlotDefinition {
-  id: string;
-  x: number;
-  y: number;
-}
-
-export type UnitDefinition = Record<string, never>;
-export type WaveDefinition = Record<string, never>;
-export type TriggerDefinition = Record<string, never>;
+export type {
+  GameDefinition,
+  GameMap,
+  MapPoint,
+  MapSize,
+  MapTile,
+  MonsterUnitDefinition,
+  PathDefinition,
+  TileKind,
+  TowerSlotDefinition,
+  TriggerDefinition,
+  UnitDefinition,
+  UnitKind,
+  WaveDefinition
+} from "./types";
 
 export interface ValidationResult {
   ok: boolean;
@@ -57,6 +25,7 @@ const tileKinds = new Set<TileKind>(["ground", "path", "tower-slot", "blocked"])
 
 export function validateGameDefinition(value: unknown): ValidationResult {
   const errors: string[] = [];
+  const pathIds = new Set<string>();
 
   if (!isRecord(value)) {
     return {
@@ -73,9 +42,10 @@ export function validateGameDefinition(value: unknown): ValidationResult {
     errors.push("map must be an object");
   } else {
     validateMap(value.map, errors);
+    collectPathIds(value.map.paths, pathIds);
   }
 
-  validateArrayField(value, "units", errors);
+  validateUnits(value.units, pathIds, errors);
   validateArrayField(value, "waves", errors);
   validateArrayField(value, "triggers", errors);
 
@@ -135,6 +105,8 @@ function validatePaths(value: unknown, errors: string[]): void {
     return;
   }
 
+  const seenPathIds = new Set<string>();
+
   value.forEach((pathDefinition, index) => {
     const path = `map.paths[${index}]`;
 
@@ -145,6 +117,10 @@ function validatePaths(value: unknown, errors: string[]): void {
 
     if (typeof pathDefinition.id !== "string" || pathDefinition.id.length === 0) {
       errors.push(`${path}.id must be a non-empty string`);
+    } else if (seenPathIds.has(pathDefinition.id)) {
+      errors.push(`${path}.id must be unique`);
+    } else {
+      seenPathIds.add(pathDefinition.id);
     }
 
     if (!Array.isArray(pathDefinition.points)) {
@@ -159,6 +135,10 @@ function validatePaths(value: unknown, errors: string[]): void {
     pathDefinition.points.forEach((point, pointIndex) => {
       validatePoint(point, `${path}.points[${pointIndex}]`, errors);
     });
+
+    if (pathDefinition.points.length >= 2 && getPathTotalLength(pathDefinition.points) <= 0) {
+      errors.push(`${path} must have a positive total length`);
+    }
   });
 }
 
@@ -197,7 +177,7 @@ function validatePoint(value: unknown, path: string, errors: string[]): void {
 
 function validateArrayField(
   value: Record<string, unknown>,
-  fieldName: "units" | "waves" | "triggers",
+  fieldName: "waves" | "triggers",
   errors: string[]
 ): void {
   if (!Array.isArray(value[fieldName])) {
@@ -205,9 +185,91 @@ function validateArrayField(
   }
 }
 
+function validateUnits(value: unknown, pathIds: Set<string>, errors: string[]): void {
+  if (!Array.isArray(value)) {
+    errors.push("units must be an array");
+    return;
+  }
+
+  const seenUnitIds = new Set<string>();
+
+  value.forEach((unit, index) => {
+    const path = `units[${index}]`;
+
+    if (!isRecord(unit)) {
+      errors.push(`${path} must be an object`);
+      return;
+    }
+
+    if (typeof unit.id !== "string" || unit.id.length === 0) {
+      errors.push(`${path}.id must be a non-empty string`);
+    } else if (seenUnitIds.has(unit.id)) {
+      errors.push(`${path}.id must be unique`);
+    } else {
+      seenUnitIds.add(unit.id);
+    }
+
+    if (unit.kind !== "monster") {
+      errors.push(`${path}.kind must be "monster"`);
+    }
+
+    if (typeof unit.pathId !== "string" || unit.pathId.length === 0) {
+      errors.push(`${path}.pathId must be a non-empty string`);
+    } else if (!pathIds.has(unit.pathId)) {
+      errors.push(`${path}.pathId must reference an existing map.paths id`);
+    }
+
+    validatePositiveNumber(unit.speed, `${path}.speed`, errors);
+    validatePositiveNumber(unit.maxHp, `${path}.maxHp`, errors);
+  });
+}
+
+function collectPathIds(value: unknown, pathIds: Set<string>): void {
+  if (!Array.isArray(value)) {
+    return;
+  }
+
+  value.forEach((path) => {
+    if (isRecord(path) && typeof path.id === "string" && path.id.length > 0) {
+      pathIds.add(path.id);
+    }
+  });
+}
+
+function getPathTotalLength(points: unknown[]): number {
+  let totalLength = 0;
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index];
+    const end = points[index + 1];
+
+    if (!isRecord(start) || !isRecord(end)) {
+      continue;
+    }
+
+    if (typeof start.x !== "number" || typeof start.y !== "number") {
+      continue;
+    }
+
+    if (typeof end.x !== "number" || typeof end.y !== "number") {
+      continue;
+    }
+
+    totalLength += Math.hypot(end.x - start.x, end.y - start.y);
+  }
+
+  return totalLength;
+}
+
 function validatePositiveInteger(value: unknown, path: string, errors: string[]): void {
   if (!Number.isInteger(value) || (value as number) <= 0) {
     errors.push(`${path} must be a positive integer`);
+  }
+}
+
+function validatePositiveNumber(value: unknown, path: string, errors: string[]): void {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    errors.push(`${path} must be a positive number`);
   }
 }
 

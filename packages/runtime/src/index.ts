@@ -16,6 +16,12 @@ import {
   Vector3,
   WebGLRenderer
 } from "three";
+import {
+  createTowerDefenseSimulation,
+  type RuntimeSimulationState
+} from "./simulation";
+
+export type { RuntimeMonsterState, RuntimeSimulationState } from "./simulation";
 
 export interface RuntimeRenderer {
   domElement: HTMLElement;
@@ -49,6 +55,8 @@ export interface TowerDefenseRuntime {
   camera: PerspectiveCamera;
   renderer: RuntimeRenderer;
   getSceneSummary(): SceneSummary;
+  tick(deltaMs: number): void;
+  getState(): RuntimeSimulationState;
   render(): void;
   dispose(): void;
 }
@@ -68,6 +76,8 @@ export function createTowerDefenseRuntime(
   options.container?.appendChild(renderer.domElement);
   buildMapScene(scene, options.game);
 
+  const simulation = createTowerDefenseSimulation(options.game);
+
   return {
     scene,
     camera,
@@ -83,6 +93,12 @@ export function createTowerDefenseRuntime(
         pathCount: options.game.map.paths.length,
         towerSlotCount: options.game.map.towerSlots.length
       };
+    },
+    tick(deltaMs) {
+      simulation.tick(deltaMs);
+    },
+    getState() {
+      return simulation.getState();
     },
     render() {
       renderer.render(scene, camera);

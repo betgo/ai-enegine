@@ -40,7 +40,15 @@
       { "id": "slot-c", "x": 7, "y": 4 }
     ]
   },
-  "units": [],
+  "units": [
+    {
+      "id": "monster-1",
+      "kind": "monster",
+      "pathId": "main-path",
+      "speed": 1,
+      "maxHp": 10
+    }
+  ],
   "waves": [],
   "triggers": []
 }
