@@ -1,8 +1,10 @@
 import type { GameDefinition, MapPoint } from "@ai-enegine/schema";
+import { createTowerDefinitions, updateTowerAttacks } from "./tower-attack";
 
 export interface RuntimeSimulationState {
   elapsedMs: number;
   monsters: RuntimeMonsterState[];
+  towers: RuntimeTowerState[];
 }
 
 export interface RuntimeMonsterState {
@@ -12,6 +14,12 @@ export interface RuntimeMonsterState {
   position: MapPoint;
   pathProgress: number;
   reachedEnd: boolean;
+}
+
+export interface RuntimeTowerState {
+  id: string;
+  slotId: string;
+  cooldownRemainingMs: number;
 }
 
 export interface TowerDefenseSimulation {
@@ -26,18 +34,36 @@ interface RuntimePathData {
   totalLength: number;
 }
 
-interface InternalMonsterState extends RuntimeMonsterState {
+export interface RuntimeTowerDefinition {
+  id: string;
+  slotId: string;
+  position: MapPoint;
+  range: number;
+  attackIntervalMs: number;
+  damage: number;
+}
+
+export interface InternalMonsterState extends RuntimeMonsterState {
   speed: number;
+}
+
+export interface InternalTowerState extends RuntimeTowerState {
+  range: number;
+  attackIntervalMs: number;
+  damage: number;
+  position: MapPoint;
 }
 
 interface InternalSimulationState {
   elapsedMs: number;
   monsters: InternalMonsterState[];
+  towers: InternalTowerState[];
 }
 
 export function createTowerDefenseSimulation(game: GameDefinition): TowerDefenseSimulation {
   const pathDataById = createPathDataById(game);
-  const state = createInitialSimulationState(game, pathDataById);
+  const towerDefinitions = createTowerDefinitions(game.towers, game.map.towerSlots);
+  const state = createInitialSimulationState(game, pathDataById, towerDefinitions);
 
   return {
     tick(deltaMs) {
@@ -47,31 +73,40 @@ export function createTowerDefenseSimulation(game: GameDefinition): TowerDefense
 
       state.elapsedMs += deltaMs;
 
-      state.monsters.forEach((monster) => {
-        if (monster.reachedEnd) {
-          return;
-        }
-
-        const pathData = pathDataById.get(monster.pathId);
-
-        if (!pathData) {
-          throw new Error(`monster path not found: ${monster.pathId}`);
-        }
-
-        const nextProgress = monster.pathProgress + (monster.speed * deltaMs) / 1000;
-        const clampedProgress = Math.min(nextProgress, pathData.totalLength);
-        const nextPosition = getPointAtProgress(pathData, clampedProgress);
-
-        monster.pathProgress = clampedProgress;
-        monster.position.x = nextPosition.x;
-        monster.position.y = nextPosition.y;
-        monster.reachedEnd = clampedProgress >= pathData.totalLength;
-      });
+      advanceMonsters(state.monsters, pathDataById, deltaMs);
+      updateTowerAttacks(state.towers, state.monsters, deltaMs);
     },
     getState() {
       return cloneSimulationState(state);
     }
   };
+}
+
+function advanceMonsters(
+  monsters: InternalMonsterState[],
+  pathDataById: Map<string, RuntimePathData>,
+  deltaMs: number
+): void {
+  monsters.forEach((monster) => {
+    if (monster.reachedEnd) {
+      return;
+    }
+
+    const pathData = pathDataById.get(monster.pathId);
+
+    if (!pathData) {
+      throw new Error(`monster path not found: ${monster.pathId}`);
+    }
+
+    const nextProgress = monster.pathProgress + (monster.speed * deltaMs) / 1000;
+    const clampedProgress = Math.min(nextProgress, pathData.totalLength);
+    const nextPosition = getPointAtProgress(pathData, clampedProgress);
+
+    monster.pathProgress = clampedProgress;
+    monster.position.x = nextPosition.x;
+    monster.position.y = nextPosition.y;
+    monster.reachedEnd = clampedProgress >= pathData.totalLength;
+  });
 }
 
 function createPathDataById(game: GameDefinition): Map<string, RuntimePathData> {
@@ -111,7 +146,8 @@ function createPathDataById(game: GameDefinition): Map<string, RuntimePathData> 
 
 function createInitialSimulationState(
   game: GameDefinition,
-  pathDataById: Map<string, RuntimePathData>
+  pathDataById: Map<string, RuntimePathData>,
+  towers: RuntimeTowerDefinition[]
 ): InternalSimulationState {
   const unitIds = new Set<string>();
 
@@ -144,7 +180,19 @@ function createInitialSimulationState(
         pathProgress: 0,
         reachedEnd: false
       };
-    })
+    }),
+    towers: towers.map((tower) => ({
+      id: tower.id,
+      slotId: tower.slotId,
+      cooldownRemainingMs: tower.attackIntervalMs,
+      range: tower.range,
+      attackIntervalMs: tower.attackIntervalMs,
+      damage: tower.damage,
+      position: {
+        x: tower.position.x,
+        y: tower.position.y
+      }
+    }))
   };
 }
 
@@ -203,6 +251,11 @@ function cloneSimulationState(state: InternalSimulationState): RuntimeSimulation
       },
       pathProgress: monster.pathProgress,
       reachedEnd: monster.reachedEnd
+    })),
+    towers: state.towers.map((tower) => ({
+      id: tower.id,
+      slotId: tower.slotId,
+      cooldownRemainingMs: tower.cooldownRemainingMs
     }))
   };
 }

@@ -49,6 +49,15 @@
       "maxHp": 10
     }
   ],
+  "towers": [
+    {
+      "id": "tower-1",
+      "slotId": "slot-a",
+      "range": 3,
+      "attackIntervalMs": 1000,
+      "damage": 1
+    }
+  ],
   "waves": [],
   "triggers": []
 }

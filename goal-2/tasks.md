@@ -107,3 +107,76 @@
   - 已运行 `npm run test`，通过：schema 10 tests，runtime 11 tests。
   - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
   - 自检：对当前阶段 4 修复有 100% 信心；审查 findings 已处理，剩余 warning 是现有 Three.js bundle size 层面的非阻塞提示。
+
+### 任务 6：架构/任务拆解 Agent 拆解阶段 5
+
+- 状态：complete
+- 目标：让架构/任务拆解 Agent 基于阶段 5“防御塔自动攻击”拆出最小任务。
+- 验证：输出包含当前目标、范围边界、任务拆解、风险与约束、推荐下一步。
+- 执行记录：
+  - 已切换到分支 `codex/stage-5-tower-attack`。
+  - 已派发架构/任务拆解 Agent `Kuhn`，只读检查 docs、schema、runtime、sample 与阶段 4 状态。
+  - 阶段 5 被收敛为单个最小任务：新增顶层 `towers[]`，通过 `slotId` 引用 `map.towerSlots[]`，runtime 在 `tick(deltaMs)` 中以 deterministic 规则自动攻击射程内怪物。
+  - JSON 最小字段：`id`、`slotId`、`range`、`attackIntervalMs`、`damage`。
+  - Runtime 最小行为：怪物移动后处理塔攻击；目标候选为射程内且 `reachedEnd === false` 的怪物；优先选择 `pathProgress` 最大者，若并列选 `id` 字典序更小者；攻击只扣 `monster.hp` 且下限为 0，并更新塔冷却 state。
+  - 本次明确不做：死亡/移除怪物、漏怪、基地扣血、胜负、波次、塔建造/升级/出售、projectile/动画/特效、Editor UI、Server/联机、ECS/Lua/AI Agent/大型抽象。
+  - 风险约束：塔定义必须与 `towerSlots` 分离；不能混入 `units[]`；攻击冷却必须进入可序列化 state；不能实现成“每 tick 最多攻击一次”导致等价时间推进结果分叉。
+  - 推荐下一步：交给全栈开发 Agent 先改 schema，再改 runtime，最后同步 sample JSON 和测试。
+  - 已关闭架构/任务拆解 Agent。
+  - 自检：对任务 6 当前拆解有 100% 信心；范围符合阶段 5，不越界到阶段 6。
+
+### 任务 7：全栈开发 Agent 实现阶段 5 最小切片
+
+- 状态：complete
+- 目标：实现最小防御塔定义与 deterministic 自动攻击。
+- 验证：schema/runtime 测试通过，项目 typecheck/test/build 通过。
+- 执行记录：
+  - 已派发全栈开发 Agent `Pauli`；该 Agent 被关闭前留下 schema 与 runtime 测试的部分改动，主会话接管实现并完成闭环。
+  - 已确认阶段 5 新增测试先失败：schema sample 缺少 `towers`，runtime 缺少 tower state、攻击扣血、clone、fail fast 等行为。
+  - 已在 `packages/schema/src/types.ts` 新增顶层 `towers: TowerDefinition[]` 与最小 `TowerDefinition`。
+  - 已将 schema 校验拆为 `map-validation.ts`、`entity-validation.ts`、`validation-utils.ts`，并新增 `towers.test.ts` 与 `test-helpers.ts`，保持文件尺寸在项目约束内。
+  - 已在 schema 中校验 towers 数组、tower id 唯一、slotId 引用已有 tower slot、slotId 不重复占用、tower 数值为正数、towerSlot id 唯一。
+  - 已在 `packages/runtime/src/simulation.ts` 增加 `towers[]` state，并新增 `packages/runtime/src/tower-attack.ts` 封装塔定义构建和攻击逻辑。
+  - 已新增 `packages/runtime/src/tower-attack.test.ts`，覆盖 tower state 初始化、射程外不扣血、到达攻击间隔扣血、targeting、等价时间推进、hp 下限、clone、runtime fail fast、sample 初始化。
+  - 已更新 `apps/editor/src/game.sample.json`，新增一座放置在 `slot-a` 的 tower。
+  - 已运行定向测试：`npm run test -w packages/schema` 通过，schema 17 tests；`npm run test -w packages/runtime` 通过，runtime 20 tests。
+  - 自检：阶段 5 初版实现保持 runtime/editor 解耦，攻击结果只写入可序列化 state，未实现死亡/漏怪/胜负。
+
+### Debug 检查 B：任务 6 到任务 8 后全面检查
+
+- 状态：pending
+- 检查项：塔 schema 语义、targeting deterministic、cooldown 可序列化、runtime/editor 解耦、MVP 边界。
+- 执行记录：
+  - 待记录。
+
+### 任务 8：测试/代码审查 Agent 审查阶段 5
+
+- 状态：complete
+- 目标：审查阶段 5 改动，确认攻击逻辑 deterministic、状态可序列化且未越界到阶段 6。
+- 验证：输出 findings、test gaps、architecture check、recommendation。
+- 执行记录：
+  - 已派发测试/代码审查 Agent `Dewey` 只读审查阶段 5 diff。
+  - Findings P1：无目标时 `cooldownRemainingMs` 被强制置为 0，会让“空场等待后进怪”和“怪一开始在场”产生不一致攻击结果，破坏 deterministic cooldown 语义。
+  - Findings P2：target tie-breaker 使用 `localeCompare`，存在跨环境 locale/ICU 差异风险。
+  - Test Gaps：缺少无目标等待后的冷却测试、id tie-breaker 不依赖数组顺序测试、hp 为 0 的怪物不应继续被选中测试。
+  - Architecture Check：runtime/editor 解耦、纯 JSON、可序列化状态、MVP 边界通过；deterministic 部分需修复 cooldown 和 id 比较。
+  - 已关闭测试/代码审查 Agent。
+
+### 任务 9：根据阶段 5 审查结果修复并最终验证
+
+- 状态：complete
+- 目标：修复审查发现的问题，运行最终验证，更新 Goal 记录并提交。
+- 验证：`npm run typecheck`、`npm run test`、`npm run build` 通过。
+- 执行记录：
+  - 已按 TDD 补充失败测试：`does not target monsters with zero hp`，确认现有逻辑会重复攻击 0 血怪物。
+  - 已修复 target 候选条件：排除 `hp <= 0` 且不移除怪物，不越界到阶段 6。
+  - 已按审查意见补充失败测试：`keeps cooldown timing while no target is in range`，确认无目标时冷却归零问题。
+  - 已修复无目标时冷却语义：不再将 `cooldownRemainingMs` 强制置为 0，保留累计冷却状态。
+  - 已将 tie-breaker 从 `localeCompare` 改为显式 `<` / `>` 比较，并补充 id 顺序不依赖 unit 数组顺序的测试。
+  - 已拆分过长测试文件，新增 `packages/runtime/src/tower-targeting.test.ts`，保持文件尺寸在项目约束内。
+  - 已运行 `npm run test -w packages/runtime`，通过：runtime 23 tests。
+  - 已运行 `npm run test -w packages/schema`，通过：schema 17 tests。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 17 tests，runtime 23 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 自检：对阶段 5 当前实现有 100% 信心；审查 findings 已处理，攻击逻辑 deterministic，未实现死亡/漏怪/胜负。

@@ -41,6 +41,7 @@ export const game: GameDefinition = {
       maxHp: 10
     }
   ],
+  towers: [],
   waves: [],
   triggers: []
 };
@@ -52,5 +53,12 @@ export function createRendererDouble() {
     setSize: vi.fn(),
     render: vi.fn(),
     dispose: vi.fn()
+  };
+}
+
+export function withTowers(towers: GameDefinition["towers"]): GameDefinition {
+  return {
+    ...game,
+    towers
   };
 }

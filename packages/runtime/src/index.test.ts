@@ -55,7 +55,8 @@ describe("createTowerDefenseRuntime", () => {
           pathProgress: 0,
           reachedEnd: false
         }
-      ]
+      ],
+      towers: []
     });
   });
 
@@ -254,7 +255,9 @@ describe("createTowerDefenseRuntime", () => {
           pathProgress: 0,
           reachedEnd: false
         }
-      ]
+      ],
+      towers: []
     });
   });
+
 });

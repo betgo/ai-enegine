@@ -2,6 +2,7 @@ export interface GameDefinition {
   version: string;
   map: GameMap;
   units: UnitDefinition[];
+  towers: TowerDefinition[];
   waves: WaveDefinition[];
   triggers: TriggerDefinition[];
 }
@@ -52,6 +53,14 @@ export interface MonsterUnitDefinition {
   pathId: string;
   speed: number;
   maxHp: number;
+}
+
+export interface TowerDefinition {
+  id: string;
+  slotId: string;
+  range: number;
+  attackIntervalMs: number;
+  damage: number;
 }
 
 export type UnitDefinition = MonsterUnitDefinition;
