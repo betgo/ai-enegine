@@ -2,6 +2,9 @@ import type { GameDefinition } from "./index";
 
 export const validGame: GameDefinition = {
   version: "0.1.0",
+  base: {
+    maxHp: 20
+  },
   map: {
     id: "demo-map",
     name: "Demo Map",

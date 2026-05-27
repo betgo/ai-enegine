@@ -7,6 +7,7 @@ import {
 import { isRecord } from "./validation-utils";
 
 export type {
+  BaseDefinition,
   GameDefinition,
   GameMap,
   MapPoint,
@@ -44,6 +45,12 @@ export function validateGameDefinition(value: unknown): ValidationResult {
     errors.push("version must be a non-empty string");
   }
 
+  if (!isRecord(value.base)) {
+    errors.push("base must be an object");
+  } else {
+    validateBase(value.base, errors);
+  }
+
   if (!isRecord(value.map)) {
     errors.push("map must be an object");
   } else {
@@ -61,6 +68,12 @@ export function validateGameDefinition(value: unknown): ValidationResult {
     ok: errors.length === 0,
     errors
   };
+}
+
+function validateBase(value: Record<string, unknown>, errors: string[]): void {
+  if (typeof value.maxHp !== "number" || !Number.isFinite(value.maxHp) || value.maxHp <= 0) {
+    errors.push("base.maxHp must be a positive number");
+  }
 }
 
 function validateArrayField(

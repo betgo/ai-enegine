@@ -3,6 +3,9 @@ import { vi } from "vitest";
 
 export const game: GameDefinition = {
   version: "0.1.0",
+  base: {
+    maxHp: 20
+  },
   map: {
     id: "demo-map",
     name: "Demo Map",
@@ -38,7 +41,8 @@ export const game: GameDefinition = {
       kind: "monster",
       pathId: "main",
       speed: 2,
-      maxHp: 10
+      maxHp: 10,
+      leakDamage: 3
     }
   ],
   towers: [],

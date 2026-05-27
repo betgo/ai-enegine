@@ -57,15 +57,17 @@ export function updateTowerAttacks(
 ): void {
   towers.forEach((tower) => {
     tower.cooldownRemainingMs -= deltaMs;
+  });
 
-    while (tower.cooldownRemainingMs <= 0) {
-      const target = selectTarget(tower, monsters);
+  attackWithReadyTowers(towers, monsters);
+}
 
-      if (!target) {
-        return;
-      }
-
-      target.hp = Math.max(0, target.hp - tower.damage);
+export function attackWithReadyTowers(
+  towers: InternalTowerState[],
+  monsters: InternalMonsterState[]
+): void {
+  towers.forEach((tower) => {
+    while (tower.cooldownRemainingMs <= 0 && attackOnce(tower, monsters)) {
       tower.cooldownRemainingMs += tower.attackIntervalMs;
     }
   });
@@ -77,8 +79,7 @@ function selectTarget(
 ): InternalMonsterState | undefined {
   const candidates = monsters.filter(
     (monster) =>
-      monster.hp > 0 &&
-      !monster.reachedEnd &&
+      monster.status === "active" &&
       getDistance(tower.position, monster.position) <= tower.range
   );
 
@@ -107,4 +108,19 @@ function compareIds(left: string, right: string): number {
 
 function getDistance(left: MapPoint, right: MapPoint): number {
   return Math.hypot(right.x - left.x, right.y - left.y);
+}
+
+function attackOnce(tower: InternalTowerState, monsters: InternalMonsterState[]): boolean {
+  const target = selectTarget(tower, monsters);
+
+  if (!target) {
+    return false;
+  }
+
+  target.hp = Math.max(0, target.hp - tower.damage);
+  if (target.hp === 0) {
+    target.status = "dead";
+  }
+
+  return true;
 }

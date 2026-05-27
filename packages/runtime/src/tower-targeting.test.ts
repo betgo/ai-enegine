@@ -39,14 +39,16 @@ describe("createTowerDefenseRuntime tower targeting", () => {
             kind: "monster",
             pathId: "main",
             speed: 1,
-            maxHp: 1
+            maxHp: 1,
+            leakDamage: 1
           },
           {
             id: "monster-b",
             kind: "monster",
             pathId: "main",
             speed: 1,
-            maxHp: 10
+            maxHp: 10,
+            leakDamage: 1
           }
         ],
         towers: [
@@ -68,6 +70,7 @@ describe("createTowerDefenseRuntime tower targeting", () => {
     const monsterB = state.monsters.find((monster) => monster.id === "monster-b");
 
     expect(monsterA?.hp).toBe(0);
+    expect(monsterA?.status).toBe("dead");
     expect(monsterB?.hp).toBe(7);
   });
 });
@@ -81,7 +84,8 @@ function createRuntimeWithUnits(unitIds: string[]) {
         kind: "monster",
         pathId: "main",
         speed: 1,
-        maxHp: 10
+        maxHp: 10,
+        leakDamage: 1
       })),
       towers: [
         {

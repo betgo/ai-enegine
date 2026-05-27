@@ -19,6 +19,9 @@ describe("validateGameDefinition", () => {
   it("rejects data without a map", () => {
     const result = validateGameDefinition({
       version: "0.1.0",
+      base: {
+        maxHp: 20
+      },
       units: [],
       towers: [],
       waves: [],
@@ -52,7 +55,8 @@ describe("validateGameDefinition", () => {
           kind: "monster",
           pathId: "main-path",
           speed: 1,
-          maxHp: 10
+          maxHp: 10,
+          leakDamage: 1
         }
       ]
     });
@@ -69,7 +73,8 @@ describe("validateGameDefinition", () => {
           kind: "boss",
           pathId: "main",
           speed: 1,
-          maxHp: 10
+          maxHp: 10,
+          leakDamage: 1
         }
       ]
     });
@@ -78,7 +83,7 @@ describe("validateGameDefinition", () => {
     expect(result.errors).toContain('units[0].kind must be "monster"');
   });
 
-  it("rejects non-positive speed and maxHp", () => {
+  it("rejects non-positive speed, maxHp and leakDamage", () => {
     const result = validateGameDefinition({
       ...validGame,
       units: [
@@ -87,7 +92,8 @@ describe("validateGameDefinition", () => {
           kind: "monster",
           pathId: "main",
           speed: 0,
-          maxHp: -1
+          maxHp: -1,
+          leakDamage: 0
         }
       ]
     });
@@ -95,6 +101,7 @@ describe("validateGameDefinition", () => {
     expect(result.ok).toBe(false);
     expect(result.errors).toContain("units[0].speed must be a positive number");
     expect(result.errors).toContain("units[0].maxHp must be a positive number");
+    expect(result.errors).toContain("units[0].leakDamage must be a positive number");
   });
 
   it("rejects unknown pathId", () => {
@@ -106,7 +113,8 @@ describe("validateGameDefinition", () => {
           kind: "monster",
           pathId: "unknown-path",
           speed: 1,
-          maxHp: 10
+          maxHp: 10,
+          leakDamage: 1
         }
       ]
     });
@@ -152,14 +160,16 @@ describe("validateGameDefinition", () => {
           kind: "monster",
           pathId: "main",
           speed: 1,
-          maxHp: 10
+          maxHp: 10,
+          leakDamage: 1
         },
         {
           id: "monster-1",
           kind: "monster",
           pathId: "main",
           speed: 1,
-          maxHp: 10
+          maxHp: 10,
+          leakDamage: 1
         }
       ]
     });
@@ -187,6 +197,42 @@ describe("validateGameDefinition", () => {
 
     expect(result.ok).toBe(false);
     expect(result.errors).toContain("map.paths[0] must have a positive total length");
+  });
+
+  it("rejects missing or invalid base", () => {
+    const { base: _ignored, ...gameWithoutBase } = validGame;
+    const missingBase = validateGameDefinition(gameWithoutBase);
+
+    expect(missingBase.ok).toBe(false);
+    expect(missingBase.errors).toContain("base must be an object");
+
+    const invalidBase = validateGameDefinition({
+      ...validGame,
+      base: {
+        maxHp: 0
+      }
+    });
+
+    expect(invalidBase.ok).toBe(false);
+    expect(invalidBase.errors).toContain("base.maxHp must be a positive number");
+  });
+
+  it("rejects missing leakDamage", () => {
+    const result = validateGameDefinition({
+      ...validGame,
+      units: [
+        {
+          id: "monster-1",
+          kind: "monster",
+          pathId: "main",
+          speed: 1,
+          maxHp: 10
+        }
+      ]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContain("units[0].leakDamage must be a positive number");
   });
 
 });

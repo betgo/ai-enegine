@@ -46,14 +46,19 @@ describe("createTowerDefenseRuntime", () => {
 
     expect(runtime.getState()).toEqual({
       elapsedMs: 0,
+      base: {
+        hp: 20,
+        maxHp: 20
+      },
       monsters: [
         {
           id: "monster-1",
           pathId: "main",
           hp: 10,
+          leakDamage: 3,
           position: { x: 0, y: 0 },
           pathProgress: 0,
-          reachedEnd: false
+          status: "active"
         }
       ],
       towers: []
@@ -139,7 +144,8 @@ describe("createTowerDefenseRuntime", () => {
               kind: "monster",
               pathId: "main",
               speed: 2,
-              maxHp: 10
+              maxHp: 10,
+              leakDamage: 1
             }
           ]
         },
@@ -194,7 +200,8 @@ describe("createTowerDefenseRuntime", () => {
             kind: "monster",
             pathId: "zigzag",
             speed: 2,
-            maxHp: 10
+            maxHp: 10,
+            leakDamage: 1
           }
         ]
       },
@@ -209,29 +216,7 @@ describe("createTowerDefenseRuntime", () => {
     expect(monster.pathProgress).toBeCloseTo(3, 6);
     expect(monster.position.x).toBeCloseTo(2, 6);
     expect(monster.position.y).toBeCloseTo(1, 6);
-    expect(monster.reachedEnd).toBe(false);
-  });
-
-  it("stops at the path end and keeps reachedEnd true", () => {
-    const runtime = createTowerDefenseRuntime({
-      game,
-      rendererFactory: () => createRendererDouble()
-    });
-
-    runtime.tick(4000);
-    const stateAtEnd = runtime.getState();
-    const monsterAtEnd = stateAtEnd.monsters[0];
-
-    expect(monsterAtEnd.reachedEnd).toBe(true);
-    expect(monsterAtEnd.position).toEqual({ x: 3, y: 2 });
-
-    runtime.tick(1000);
-    const stateAfterExtraTick = runtime.getState();
-    const monsterAfterExtraTick = stateAfterExtraTick.monsters[0];
-
-    expect(monsterAfterExtraTick.reachedEnd).toBe(true);
-    expect(monsterAfterExtraTick.position).toEqual({ x: 3, y: 2 });
-    expect(monsterAfterExtraTick.pathProgress).toBe(monsterAtEnd.pathProgress);
+    expect(monster.status).toBe("active");
   });
 
   it("returns a cloned state to prevent external mutation", () => {
@@ -242,18 +227,24 @@ describe("createTowerDefenseRuntime", () => {
 
     const state = runtime.getState();
     state.elapsedMs = 9999;
+    state.base.hp = 1;
     state.monsters[0].position.x = 9999;
 
     expect(runtime.getState()).toEqual({
       elapsedMs: 0,
+      base: {
+        hp: 20,
+        maxHp: 20
+      },
       monsters: [
         {
           id: "monster-1",
           pathId: "main",
           hp: 10,
+          leakDamage: 3,
           position: { x: 0, y: 0 },
           pathProgress: 0,
-          reachedEnd: false
+          status: "active"
         }
       ],
       towers: []

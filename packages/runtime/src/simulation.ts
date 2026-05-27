@@ -1,19 +1,37 @@
 import type { GameDefinition, MapPoint } from "@ai-enegine/schema";
-import { createTowerDefinitions, updateTowerAttacks } from "./tower-attack";
+import {
+  createPathDataById,
+  getNextEscapeTimeMs,
+  getNextReadyTowerRangeTimeMs,
+  moveActiveMonsters,
+  type RuntimePathData
+} from "./movement";
+import { attackWithReadyTowers, createTowerDefinitions, updateTowerAttacks } from "./tower-attack";
+
+const TIME_EPSILON_MS = 0.000001;
 
 export interface RuntimeSimulationState {
   elapsedMs: number;
+  base: RuntimeBaseState;
   monsters: RuntimeMonsterState[];
   towers: RuntimeTowerState[];
 }
+
+export interface RuntimeBaseState {
+  hp: number;
+  maxHp: number;
+}
+
+export type RuntimeMonsterStatus = "active" | "dead" | "escaped";
 
 export interface RuntimeMonsterState {
   id: string;
   pathId: string;
   hp: number;
+  leakDamage: number;
   position: MapPoint;
   pathProgress: number;
-  reachedEnd: boolean;
+  status: RuntimeMonsterStatus;
 }
 
 export interface RuntimeTowerState {
@@ -25,13 +43,6 @@ export interface RuntimeTowerState {
 export interface TowerDefenseSimulation {
   tick(deltaMs: number): void;
   getState(): RuntimeSimulationState;
-}
-
-interface RuntimePathData {
-  id: string;
-  points: MapPoint[];
-  segmentLengths: number[];
-  totalLength: number;
 }
 
 export interface RuntimeTowerDefinition {
@@ -56,6 +67,7 @@ export interface InternalTowerState extends RuntimeTowerState {
 
 interface InternalSimulationState {
   elapsedMs: number;
+  base: RuntimeBaseState;
   monsters: InternalMonsterState[];
   towers: InternalTowerState[];
 }
@@ -71,10 +83,7 @@ export function createTowerDefenseSimulation(game: GameDefinition): TowerDefense
         throw new Error("deltaMs must be a non-negative finite number");
       }
 
-      state.elapsedMs += deltaMs;
-
-      advanceMonsters(state.monsters, pathDataById, deltaMs);
-      updateTowerAttacks(state.towers, state.monsters, deltaMs);
+      advanceSimulation(state, pathDataById, deltaMs);
     },
     getState() {
       return cloneSimulationState(state);
@@ -82,66 +91,54 @@ export function createTowerDefenseSimulation(game: GameDefinition): TowerDefense
   };
 }
 
-function advanceMonsters(
-  monsters: InternalMonsterState[],
+function advanceSimulation(
+  state: InternalSimulationState,
   pathDataById: Map<string, RuntimePathData>,
   deltaMs: number
 ): void {
-  monsters.forEach((monster) => {
-    if (monster.reachedEnd) {
-      return;
+  let remainingMs = deltaMs;
+
+  attackWithReadyTowers(state.towers, state.monsters);
+
+  while (remainingMs > 0) {
+    const stepMs = getNextStepMs(state, pathDataById, remainingMs);
+
+    if (stepMs > 0) {
+      state.elapsedMs += stepMs;
+      moveActiveMonsters(state.base, state.monsters, pathDataById, stepMs);
+      updateTowerAttacks(state.towers, state.monsters, stepMs);
+      remainingMs -= stepMs;
     }
 
-    const pathData = pathDataById.get(monster.pathId);
+    attackWithReadyTowers(state.towers, state.monsters);
 
-    if (!pathData) {
-      throw new Error(`monster path not found: ${monster.pathId}`);
+    if (stepMs <= TIME_EPSILON_MS) {
+      break;
     }
-
-    const nextProgress = monster.pathProgress + (monster.speed * deltaMs) / 1000;
-    const clampedProgress = Math.min(nextProgress, pathData.totalLength);
-    const nextPosition = getPointAtProgress(pathData, clampedProgress);
-
-    monster.pathProgress = clampedProgress;
-    monster.position.x = nextPosition.x;
-    monster.position.y = nextPosition.y;
-    monster.reachedEnd = clampedProgress >= pathData.totalLength;
-  });
+  }
 }
 
-function createPathDataById(game: GameDefinition): Map<string, RuntimePathData> {
-  const pathDataById = new Map<string, RuntimePathData>();
+function getNextStepMs(
+  state: InternalSimulationState,
+  pathDataById: Map<string, RuntimePathData>,
+  remainingMs: number
+): number {
+  return Math.min(
+    remainingMs,
+    getNextTowerCooldownMs(state.towers),
+    getNextEscapeTimeMs(state.monsters, pathDataById),
+    getNextReadyTowerRangeTimeMs(state.towers, state.monsters, pathDataById)
+  );
+}
 
-  game.map.paths.forEach((path) => {
-    if (pathDataById.has(path.id)) {
-      throw new Error(`duplicate path id: ${path.id}`);
+function getNextTowerCooldownMs(towers: InternalTowerState[]): number {
+  return towers.reduce((nextTime, tower) => {
+    if (tower.cooldownRemainingMs <= 0) {
+      return nextTime;
     }
 
-    const segmentLengths: number[] = [];
-    let totalLength = 0;
-
-    for (let index = 0; index < path.points.length - 1; index += 1) {
-      const start = path.points[index];
-      const end = path.points[index + 1];
-      const length = Math.hypot(end.x - start.x, end.y - start.y);
-
-      segmentLengths.push(length);
-      totalLength += length;
-    }
-
-    if (totalLength <= 0) {
-      throw new Error(`path must have a positive total length: ${path.id}`);
-    }
-
-    pathDataById.set(path.id, {
-      id: path.id,
-      points: path.points.map((point) => ({ x: point.x, y: point.y })),
-      segmentLengths,
-      totalLength
-    });
-  });
-
-  return pathDataById;
+    return Math.min(nextTime, tower.cooldownRemainingMs);
+  }, Number.POSITIVE_INFINITY);
 }
 
 function createInitialSimulationState(
@@ -153,6 +150,10 @@ function createInitialSimulationState(
 
   return {
     elapsedMs: 0,
+    base: {
+      hp: game.base.maxHp,
+      maxHp: game.base.maxHp
+    },
     monsters: game.units.map((unit) => {
       if (unitIds.has(unit.id)) {
         throw new Error(`duplicate unit id: ${unit.id}`);
@@ -172,13 +173,14 @@ function createInitialSimulationState(
         id: unit.id,
         pathId: unit.pathId,
         hp: unit.maxHp,
+        leakDamage: unit.leakDamage,
         speed: unit.speed,
         position: {
           x: startPoint.x,
           y: startPoint.y
         },
         pathProgress: 0,
-        reachedEnd: false
+        status: "active"
       };
     }),
     towers: towers.map((tower) => ({
@@ -196,61 +198,24 @@ function createInitialSimulationState(
   };
 }
 
-function getPointAtProgress(pathData: RuntimePathData, progress: number): MapPoint {
-  if (progress <= 0) {
-    return { x: pathData.points[0].x, y: pathData.points[0].y };
-  }
-
-  if (progress >= pathData.totalLength) {
-    const endPoint = pathData.points[pathData.points.length - 1];
-    return { x: endPoint.x, y: endPoint.y };
-  }
-
-  let remaining = progress;
-
-  for (let index = 0; index < pathData.segmentLengths.length; index += 1) {
-    const segmentLength = pathData.segmentLengths[index];
-    const start = pathData.points[index];
-    const end = pathData.points[index + 1];
-
-    if (segmentLength <= 0) {
-      continue;
-    }
-
-    if (remaining <= segmentLength) {
-      const ratio = remaining / segmentLength;
-
-      return {
-        x: lerp(start.x, end.x, ratio),
-        y: lerp(start.y, end.y, ratio)
-      };
-    }
-
-    remaining -= segmentLength;
-  }
-
-  const fallback = pathData.points[pathData.points.length - 1];
-
-  return { x: fallback.x, y: fallback.y };
-}
-
-function lerp(start: number, end: number, ratio: number): number {
-  return start + (end - start) * ratio;
-}
-
 function cloneSimulationState(state: InternalSimulationState): RuntimeSimulationState {
   return {
     elapsedMs: state.elapsedMs,
+    base: {
+      hp: state.base.hp,
+      maxHp: state.base.maxHp
+    },
     monsters: state.monsters.map((monster) => ({
       id: monster.id,
       pathId: monster.pathId,
       hp: monster.hp,
+      leakDamage: monster.leakDamage,
       position: {
         x: monster.position.x,
         y: monster.position.y
       },
       pathProgress: monster.pathProgress,
-      reachedEnd: monster.reachedEnd
+      status: monster.status
     })),
     towers: state.towers.map((tower) => ({
       id: tower.id,

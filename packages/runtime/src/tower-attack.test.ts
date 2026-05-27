@@ -97,7 +97,8 @@ describe("createTowerDefenseRuntime tower attacks", () => {
             kind: "monster",
             pathId: "main",
             speed: 1,
-            maxHp: 10
+            maxHp: 10,
+            leakDamage: 1
           }
         ],
         towers: [
@@ -164,7 +165,10 @@ describe("createTowerDefenseRuntime tower attacks", () => {
 
     runtime.tick(500);
 
-    expect(runtime.getState().monsters[0].hp).toBe(0);
+    const state = runtime.getState();
+    expect(state.monsters[0].hp).toBe(0);
+    expect(state.monsters[0].status).toBe("dead");
+    expect(state.base.hp).toBe(20);
   });
 
   it("returns cloned tower state to prevent external mutation", () => {

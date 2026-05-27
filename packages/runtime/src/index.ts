@@ -22,6 +22,10 @@ import {
 } from "./simulation";
 
 export type { RuntimeMonsterState, RuntimeSimulationState } from "./simulation";
+export type {
+  RuntimeBaseState,
+  RuntimeMonsterStatus
+} from "./simulation";
 
 export interface RuntimeRenderer {
   domElement: HTMLElement;

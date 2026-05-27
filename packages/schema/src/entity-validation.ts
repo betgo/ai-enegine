@@ -44,6 +44,7 @@ export function validateUnits(
 
     validatePositiveNumber(unit.speed, `${path}.speed`, errors);
     validatePositiveNumber(unit.maxHp, `${path}.maxHp`, errors);
+    validatePositiveNumber(unit.leakDamage, `${path}.leakDamage`, errors);
   });
 }
 

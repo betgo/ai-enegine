@@ -144,10 +144,15 @@
 
 ### Debug 检查 B：任务 6 到任务 8 后全面检查
 
-- 状态：pending
+- 状态：complete
 - 检查项：塔 schema 语义、targeting deterministic、cooldown 可序列化、runtime/editor 解耦、MVP 边界。
 - 执行记录：
-  - 待记录。
+  - 塔 schema 语义：`towers[]` 作为顶层纯 JSON 定义存在，塔通过 `slotId` 引用 `map.towerSlots[]`，没有混入 `units[]`；schema 校验覆盖 tower id 唯一、slotId 引用、slotId 不重复占用和数值为正。
+  - targeting deterministic：target 候选排除 `hp <= 0` 和 `reachedEnd === true` 的怪物；目标优先级为更高 `pathProgress`，并列时使用显式字符串 `<` / `>` 比较 id，避免 `localeCompare` 的跨环境差异。
+  - cooldown 可序列化：`RuntimeTowerState` 暴露 `cooldownRemainingMs`，为纯数值状态；无目标时不重置冷却，避免空场等待导致时间推进语义分叉。
+  - runtime/editor 解耦：攻击逻辑位于 `packages/runtime/src/tower-attack.ts` 与 `packages/runtime/src/simulation.ts`；`apps/editor` 只同步 sample JSON，没有写入 gameplay 逻辑。
+  - MVP 边界：阶段 5 未实现死亡移除、漏怪、基地扣血、胜负、波次、塔建造/升级/出售、Server 联机、AI Agent、Lua、ECS 或大型编辑器。
+  - 验证证据：任务 9 已记录 `npm run typecheck`、`npm run test`、`npm run build` 通过；Vite chunk size warning 为现有 Three.js bundle 体积提示，不阻塞阶段 5。
 
 ### 任务 8：测试/代码审查 Agent 审查阶段 5
 
@@ -180,3 +185,83 @@
   - 已运行 `npm run test`，通过：schema 17 tests，runtime 23 tests。
   - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
   - 自检：对阶段 5 当前实现有 100% 信心；审查 findings 已处理，攻击逻辑 deterministic，未实现死亡/漏怪/胜负。
+
+### 任务 10：架构/任务拆解 Agent 拆解阶段 6
+
+- 状态：complete
+- 目标：让架构/任务拆解 Agent 基于阶段 6“血量系统”拆出最小任务。
+- 验证：输出包含当前目标、范围边界、任务拆解、风险与约束、推荐下一步。
+- 执行记录：
+  - 已派发架构/任务拆解 Agent `Kepler`，只读检查 docs、goal 记录、schema、runtime、tests 与 sample。
+  - 阶段 6 被收敛为单个最小任务：实现“单基地 HP + 怪物死亡/漏怪结算”。
+  - JSON 最小变化：新增顶层 `base`，最小字段为 `maxHp`；`units[]` 中 monster 增加 `leakDamage`。
+  - Runtime 最小状态：`RuntimeSimulationState` 新增 base state；monster 新增显式 `status: "active" | "dead" | "escaped"`。
+  - Runtime 最小行为：只推进 active monster；被打到 0 HP 的怪物标记 dead，后续不移动、不再被攻击、不漏怪；活着到终点的怪物只扣一次 base HP 并标记 escaped。
+  - 本次明确不做：waves 生成与推进、完整 gameStatus/victory 状态机、金币/奖励、塔建造/升级/出售、投射物/特效、Editor UI、Server 协议、删除或重排 monster 数组。
+  - 风险约束：不能只用 `hp === 0` 隐式表达死亡；不能从 `monsters[]` 删除对象；不能把胜利条件提前做进阶段 6；单基地足够，不引入 player/players 或多基地。
+  - 推荐下一步：交给全栈开发 Agent 实现“单基地 HP + 怪物死亡/漏怪结算”，顺序为 schema -> sample JSON -> runtime -> 定向测试。
+  - 已关闭架构/任务拆解 Agent。
+  - 自检：对任务 10 当前拆解有 100% 信心；范围符合阶段 6，不越界到阶段 7。
+
+### 任务 11：全栈开发 Agent 实现阶段 6 最小切片
+
+- 状态：complete
+- 目标：实现单基地 HP、怪物死亡状态和漏怪扣血结算。
+- 验证：schema/runtime 测试通过，项目 typecheck/test/build 通过。
+- 执行记录：
+  - 已派发全栈开发 Agent `Bohr` 实现阶段 6 最小切片。
+  - 已在 `packages/schema/src/types.ts` 新增 `base: BaseDefinition`，最小字段为 `maxHp`。
+  - 已在 monster definition 中新增 `leakDamage`，并在 schema 校验中要求 `base.maxHp` 与 `units[].leakDamage` 为正数。
+  - 已同步 `packages/schema/src/test-helpers.ts` 与 `apps/editor/src/game.sample.json`，sample JSON 继续保持纯 JSON。
+  - 已在 runtime state 中新增 `base: { hp, maxHp }`，并为 monster state 新增 `status: "active" | "dead" | "escaped"`。
+  - 已实现基础结算：active monster 到达终点会扣一次 base hp 并标记 escaped；hp 被塔打到 0 会标记 dead；dead/escaped 不再移动、不再被攻击、不重复漏怪。
+  - 已新增/更新 schema 与 runtime 测试，覆盖 base/leakDamage 校验、初始化 state、dead/escaped、base hp clamp、sample 初始化。
+  - 全栈开发 Agent 已运行 `npm run test -w packages/schema`、`npm run test -w packages/runtime`、`npm run typecheck`、`npm run test` 并报告通过。
+  - 主会话复核发现两个问题需要收尾：阶段 6 tick 分割等价性仍有竞争场景漏洞，且 `index.test.ts` 与 `tower-attack.test.ts` 超过 300 行文件长度约束。
+  - 自检：阶段 6 初版方向正确，但在审查修复完成前不作为最终完成态。
+
+### 任务 12：测试/代码审查 Agent 审查阶段 6
+
+- 状态：complete
+- 目标：审查阶段 6 改动，确认血量系统 deterministic、可序列化且未越界到阶段 7。
+- 验证：输出 findings、test gaps、architecture check、recommendation。
+- 执行记录：
+  - 已派发测试/代码审查 Agent `Galileo` 只读审查阶段 6 diff。
+  - Findings P1：`tick(deltaMs)` 仍按“整段移动完所有怪，再整段结算所有塔攻击”的顺序执行，在“攻击阻止漏怪”的竞争场景下会导致 `tick(1000)` 与 `tick(500)+tick(500)` 结果分叉，破坏等价 tick 分割与未来多人同步。
+  - Test Gaps：缺少覆盖“同一总时长下，怪会在该时间窗内死亡或逃脱”的等价性测试。
+  - Architecture Check：Runtime/Editor 解耦、纯 JSON、可校验、可序列化、未越界到 waves/gameStatus/Editor UI/Server/AI Agent/Lua/ECS/MMO；`dead monster` 不再移动、不漏怪、不再被选中这一点通过。
+  - Recommendation：先修 `tick` 内时间步进模型，补反例测试，再重新验证。
+  - 已关闭测试/代码审查 Agent。
+
+### 任务 13：根据阶段 6 审查结果修复并最终验证
+
+- 状态：complete
+- 目标：修复阶段 6 tick 分割等价性问题，处理测试文件长度约束，并运行最终验证。
+- 验证：`npm run test -w packages/schema`、`npm run test -w packages/runtime`、`npm run typecheck`、`npm run test`、`npm run build` 通过。
+- 执行记录：
+  - 已按 TDD 新增 `packages/runtime/src/health-system.test.ts`，补充“攻击阻止漏怪”竞争场景：`tick(1000)` 与 `tick(500)+tick(500)` 必须得到相同 state。
+  - 已确认新增测试先失败：单 tick 结果为 escaped 且 base 被扣血，拆分 tick 结果为 dead 且 base 未扣血，复现审查 P1。
+  - 已新增 `packages/runtime/src/movement.ts`，封装 path data、怪物移动、终点时间和 ready tower 入射程时间计算。
+  - 已调整 `packages/runtime/src/simulation.ts`：runtime 内部按剩余时间、下一个塔冷却完成时间、下一个怪物到达终点时间、ready tower 的下一个入射程时间进行子步进，保持大 tick 与拆分 tick 的结算顺序一致。
+  - 已调整 `packages/runtime/src/tower-attack.ts`：拆出 ready tower 攻击入口，攻击仍只选择 active monster，hp 到 0 后标记 dead。
+  - 已将血量相关测试从 `index.test.ts` 和 `tower-attack.test.ts` 移入 `health-system.test.ts`，所有 source/test 文件均低于 300 行。
+  - 已运行 `npm run test -w packages/runtime -- health-system`，先失败后修复通过。
+  - 已运行 `npm run test -w packages/runtime`，通过：runtime 27 tests。
+  - 已运行 `npm run test -w packages/schema`，通过：schema 19 tests。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 19 tests，runtime 27 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 自检：对阶段 6 当前实现有 100% 信心；审查 P1 已用红绿测试闭环修复，runtime/editor 仍解耦，未实现阶段 7 波次或完整 gameStatus。
+
+### Debug 检查 C：任务 10 到任务 13 后全面检查
+
+- 状态：complete
+- 检查项：血量 schema 语义、death/escaped 状态、tick 分割等价性、runtime/editor 解耦、MVP 边界、文件尺寸。
+- 执行记录：
+  - 血量 schema 语义：`base.maxHp` 与 `units[].leakDamage` 是纯 JSON 正数定义，schema 校验与 sample JSON 已同步。
+  - death/escaped 状态：monster 保留稳定数组位置和 id，通过 `status: "active" | "dead" | "escaped"` 表达生命周期；不从 `monsters[]` 删除对象，适合 future diff/sync。
+  - tick 分割等价性：已补充失败测试并修复；runtime 内部按关键事件时间子步进，避免大 tick 先漏怪、小 tick 先打死的分叉。
+  - runtime/editor 解耦：血量、死亡、漏怪和塔攻击结算均在 `packages/runtime`；`apps/editor` 只同步 sample JSON，没有写入 gameplay 逻辑。
+  - MVP 边界：阶段 6 未实现 waves、完整 gameStatus/victory、金币/奖励、塔建造/升级/出售、投射物/特效、Editor UI、Server、AI Agent、Lua、ECS、MMO。
+  - 文件尺寸：已运行 `wc -l packages/runtime/src/*.ts packages/schema/src/*.ts apps/editor/src/App.tsx apps/editor/src/main.tsx`，所有检查文件均低于 300 行。
+  - 验证证据：`npm run test -w packages/schema`、`npm run test -w packages/runtime`、`npm run typecheck`、`npm run test`、`npm run build` 均通过；Vite chunk size warning 为非阻塞体积提示。

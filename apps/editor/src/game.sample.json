@@ -1,5 +1,8 @@
 {
   "version": "0.1.0",
+  "base": {
+    "maxHp": 30
+  },
   "map": {
     "id": "td-demo",
     "name": "Runtime Demo",
@@ -46,7 +49,8 @@
       "kind": "monster",
       "pathId": "main-path",
       "speed": 1,
-      "maxHp": 10
+      "maxHp": 10,
+      "leakDamage": 5
     }
   ],
   "towers": [

@@ -1,10 +1,15 @@
 export interface GameDefinition {
   version: string;
+  base: BaseDefinition;
   map: GameMap;
   units: UnitDefinition[];
   towers: TowerDefinition[];
   waves: WaveDefinition[];
   triggers: TriggerDefinition[];
+}
+
+export interface BaseDefinition {
+  maxHp: number;
 }
 
 export interface GameMap {
@@ -53,6 +58,7 @@ export interface MonsterUnitDefinition {
   pathId: string;
   speed: number;
   maxHp: number;
+  leakDamage: number;
 }
 
 export interface TowerDefinition {
