@@ -119,11 +119,20 @@
 
 ### 任务 6：项目级验证与文档同步
 
-- 状态：pending
+- 状态：complete
 - 目标：运行全量 typecheck/test/build，更新 README 或 docs 中的 MVP 启动说明。
 - 验证：`npm run typecheck`、`npm run test`、`npm run build` 完成；若无法运行 dev server，记录原因。
 - 执行记录：
-  - 待记录。
+  - 已更新 `README.md`，补充 MVP 范围、目录结构、安装命令、本地预览命令、验证命令、架构约束和下一步说明。
+  - 已运行 `npm run typecheck`，schema、runtime、editor typecheck 均完成，退出码 0。
+  - 已运行 `npm run test`，schema 1 个 test file、2 tests 通过；runtime 1 个 test file、2 tests 通过，退出码 0。
+  - 已运行 `npm run build`，schema、runtime、editor build 均完成，退出码 0。
+  - `npm run build` 中 Vite 输出 Three.js bundle 超过 500 kB 的 chunk size warning；当前作为 3D MVP 预览的已知体积提示记录，不影响构建结果。
+  - 已运行 `npm run dev -w apps/editor`，dev server 启动于 `http://127.0.0.1:5173/`。
+  - 已用浏览器 smoke check 本地预览：页面标题 `AI Enegine Editor Preview`，H1 `3D Tower Defense Runtime`，状态 `Loaded from game.sample.json`，inspector 显示 `Runtime Demo`、`10 x 7`、Tiles `14`、Paths `1`、Tower slots `3`。
+  - 浏览器 smoke check 确认存在 1 个 canvas，client/buffer 尺寸均为 `960 x 720`，应用 console errors 为空。
+  - 已结束本轮启动的 Vite dev server，并确认 `lsof -ti tcp:5173` 无输出。
+  - 自检：对任务 6 当前实现有 100% 信心；README 与实际命令、预览行为一致，且项目级验证有 fresh evidence。
 
 ### Debug 检查 B：全部 MVP 基座后最终检查
 
