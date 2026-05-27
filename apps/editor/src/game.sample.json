@@ -1,0 +1,46 @@
+{
+  "version": "0.1.0",
+  "map": {
+    "id": "td-demo",
+    "name": "Runtime Demo",
+    "size": {
+      "width": 10,
+      "height": 7
+    },
+    "tiles": [
+      { "x": 0, "y": 3, "kind": "path" },
+      { "x": 1, "y": 3, "kind": "path" },
+      { "x": 2, "y": 3, "kind": "path" },
+      { "x": 3, "y": 3, "kind": "path" },
+      { "x": 4, "y": 3, "kind": "path" },
+      { "x": 5, "y": 3, "kind": "path" },
+      { "x": 6, "y": 3, "kind": "path" },
+      { "x": 7, "y": 3, "kind": "path" },
+      { "x": 8, "y": 3, "kind": "path" },
+      { "x": 9, "y": 3, "kind": "path" },
+      { "x": 2, "y": 2, "kind": "tower-slot" },
+      { "x": 5, "y": 2, "kind": "tower-slot" },
+      { "x": 7, "y": 4, "kind": "tower-slot" },
+      { "x": 4, "y": 5, "kind": "blocked" }
+    ],
+    "paths": [
+      {
+        "id": "main-path",
+        "points": [
+          { "x": 0, "y": 3 },
+          { "x": 4, "y": 3 },
+          { "x": 6, "y": 3 },
+          { "x": 9, "y": 3 }
+        ]
+      }
+    ],
+    "towerSlots": [
+      { "id": "slot-a", "x": 2, "y": 2 },
+      { "id": "slot-b", "x": 5, "y": 2 },
+      { "id": "slot-c", "x": 7, "y": 4 }
+    ]
+  },
+  "units": [],
+  "waves": [],
+  "triggers": []
+}

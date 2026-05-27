@@ -1,0 +1,22 @@
+{
+  "name": "ai-enegine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w packages/schema && npm run build -w packages/runtime && npm run build -w apps/editor",
+    "typecheck": "npm run typecheck -w packages/schema && npm run typecheck -w packages/runtime && npm run typecheck -w apps/editor",
+    "test": "npm run test -w packages/schema && npm run test -w packages/runtime"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.9"
+  }
+}
