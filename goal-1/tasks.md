@@ -136,7 +136,22 @@
 
 ### Debug 检查 B：全部 MVP 基座后最终检查
 
-- 状态：pending
+- 状态：complete
 - 检查项：C 端预览体验、代码质量、Runtime/Editor 解耦、JSON 可序列化、安全边界。
 - 执行记录：
-  - 待记录。
+  - 已恢复读取 `goal-1/input.md`、`goal-1/plan.md`、`goal-1/tasks.md`，确认目标仍为完成项目中 MVP 目标。
+  - 已运行 `git status --short`，检查开始时工作区干净。
+  - 已运行 `npm run typecheck`，schema、runtime、editor typecheck 均完成，退出码 0。
+  - 已运行 `npm run test`，schema 1 个 test file、2 tests 通过；runtime 1 个 test file、2 tests 通过，退出码 0。
+  - 已运行 `npm run build`，schema、runtime、editor build 均完成，退出码 0；Vite 仍提示 Three.js chunk 超过 500 kB，此为已记录的 3D MVP 预览体积提示。
+  - 已运行依赖边界扫描 `rg -n "react|react-dom|zustand|@ai-enegine/editor|apps/editor|document|window|HTMLElement|localStorage|sessionStorage" packages/runtime/src packages/runtime/package.json packages/schema/src packages/schema/package.json`；runtime/schema 未依赖 React、Zustand、Editor、storage，命中项仅为 runtime DOM 挂载类型 `HTMLElement`。
+  - 已运行安全/MVP 边界扫描 `rg -n "eval|new Function|Function\\(|script|innerHTML|dangerouslySetInnerHTML|localStorage|sessionStorage|fetch\\(|XMLHttpRequest|WebSocket|Colyseus|login|auth|shop|market|social|Lua|ECS|MMO" apps packages docs README.md`；命中项均为文档中的禁止/未来规划说明、package.json scripts 或 HTML module script，没有发现任意代码执行、网络通信、登录、商城、社交、Lua、ECS、MMO 实现。
+  - 已运行 Node JSON 解析检查 `apps/editor/src/game.sample.json`，确认示例 JSON 可解析，包含 `version`、`map`、`units`、`waves`、`triggers`，并且 `units/waves/triggers` 均为数组。
+  - 已运行 `npm query .workspace`，确认 `apps/editor`、`apps/server`、`packages/runtime`、`packages/schema`、`packages/shared` 5 个 workspace 存在。
+  - 已运行 `npm run dev -w apps/editor`，dev server 启动于 `http://127.0.0.1:5173/`。
+  - 已用浏览器最终 smoke check：URL `http://127.0.0.1:5173/`，标题 `AI Enegine Editor Preview`，H1 `3D Tower Defense Runtime`，状态 `Loaded from game.sample.json`，inspector 显示 `Runtime Demo`、`10 x 7`、Tiles `14`、Paths `1`、Tower slots `3`。
+  - 浏览器最终 smoke check 确认存在 1 个 canvas，client/buffer 尺寸均为 `960 x 720`，应用 console error 列表为空。
+  - 已保存最终截图证据，画面显示网格、路径、塔位标记、blocked tile 和 inspector。
+  - 已结束最终 smoke check 启动的 Vite dev server，并确认 `lsof -ti tcp:5173` 无输出。
+  - 已确认 `.DS_Store` 仅为 ignored 本地文件，未被 Git 跟踪。
+  - 最终审计结论：Goal 1 的 MVP 基座要求均有当前状态证据覆盖；可以标记本 Goal 完成。
