@@ -8,13 +8,13 @@
 2. 全栈开发 Agent
 3. 测试/代码审查 Agent
 
-当前仓库已经完成 Goal 1：3D Tower Defense Runtime MVP 基座。根据 `docs/project-plan.md`，阶段 1 到阶段 3 已具备基础能力：
+Goal 2 启动时，仓库已经完成 Goal 1：3D Tower Defense Runtime MVP 基座。根据 `docs/project-plan.md`，阶段 1 到阶段 3 当时已具备基础能力：
 
 - 阶段 1：`game.json` schema
 - 阶段 2：Three.js runtime
 - 阶段 3：地图加载
 
-因此 Goal 2 的下一步应从阶段 4 开始：怪物路径移动。
+因此 Goal 2 从阶段 4 开始推进，并继续完成到阶段 10：保存/加载地图。
 
 ## 2. 上下文梳理
 
@@ -53,12 +53,17 @@
 2. 全栈开发 Agent：根据拆解实现一个最小功能，优先 schema/runtime，再接 editor。
 3. 测试/代码审查 Agent：审查 diff、测试覆盖、架构边界和 MVP 边界。
 
-本轮优先目标：
+Goal 2 覆盖目标：
 
 - 阶段 4：怪物路径移动。
-- 最小能力：从 JSON 定义单位类型和一个初始怪物，runtime 创建可序列化 state，通过固定 tick 沿路径移动，并让 editor preview 能显示移动后的怪物位置。
+- 阶段 5：防御塔自动攻击。
+- 阶段 6：血量系统。
+- 阶段 7：波次系统。
+- 阶段 8：游戏状态管理。
+- 阶段 9：简单地图编辑器。
+- 阶段 10：保存/加载地图。
 
-是否接入动画由架构 Agent 拆解后决定；默认先做 deterministic tick 和测试，避免 UI 先行。
+每个阶段都按架构/任务拆解 Agent -> 全栈开发 Agent -> 测试/代码审查 Agent -> 修复验证闭环推进。
 
 ## 5. 验证方式
 
@@ -68,12 +73,12 @@
 - `npm run test`
 - `npm run build`
 
-阶段 4 额外验证：
+阶段验证：
 
-- schema 测试覆盖新增 JSON 字段。
-- runtime 测试覆盖相同初始状态和相同 tick 序列产生相同怪物位置。
-- runtime 测试覆盖怪物沿路径推进，状态可序列化。
-- 浏览器 smoke check 仅在 editor 接入后执行。
+- schema 测试覆盖新增或变化的 JSON 字段。
+- runtime 测试覆盖 deterministic tick、可序列化 state、移动、攻击、血量、波次和 game status。
+- editor 测试覆盖 JSON helper、地图编辑派生规则、本地导入/导出边界。
+- editor 接入后执行可行浏览器 smoke check。
 
 ## 6. 回滚方案
 
@@ -84,7 +89,7 @@
 
 ## 7. 当前执行状态
 
-- 状态：进行中。
-- 当前任务：阶段 4 最小切片实现中。
-- 已完成：Goal 2 核心文件创建；架构/任务拆解 Agent 已将阶段 4 收敛为“初始怪物沿已有路径 deterministic tick 移动”。
-- 下一任务：全栈开发 Agent 实现 schema/runtime/sample/test 后，运行验证并派发测试/代码审查 Agent。
+- 状态：已完成阶段 4-10 的实现、审查修复和最终验证。
+- 已完成：怪物路径移动、防御塔自动攻击、血量系统、波次系统、游戏状态管理、简单地图编辑器、本地保存/加载地图。
+- 验证：`npm run typecheck`、`npm run test`、`npm run build` 均已在阶段 10 收尾时通过；Vite chunk size warning 为非阻塞提示。
+- 记录：逐阶段执行细节、Agent 分工、审查 findings、修复记录和 Debug 检查见 `goal-2/tasks.md`。
