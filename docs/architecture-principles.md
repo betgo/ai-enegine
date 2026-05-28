@@ -7,6 +7,7 @@
 ```txt
 apps/
   editor/
+  player/
   server/
 
 packages/
@@ -18,7 +19,8 @@ packages/
 职责边界：
 
 - `apps/editor`：浏览器编辑器和预览界面。只负责用户交互、JSON 修改和调用 Runtime 预览。
-- `apps/server`：未来承载 Colyseus 房间、同步协议和持久化入口。第一阶段可以暂不实现。
+- `apps/player`：浏览器游戏运行入口。只负责读取 `GameDefinition`、驱动 Runtime tick/render、展示 Runtime state 和基础运行控制。
+- `apps/server`：未来承载 Colyseus 房间、同步协议和持久化入口。Playable Runtime 阶段可以暂不实现。
 - `packages/runtime`：Tower Defense runtime。负责读取 definition、推进 simulation、输出可渲染状态。
 - `packages/schema`：`game.json` 类型、版本、校验规则和示例数据。
 - `packages/shared`：跨端共享的极少量工具或常量。没有明确复用前不要加入内容。
@@ -32,6 +34,10 @@ apps/editor  -> packages/runtime
 apps/editor  -> packages/schema
 apps/editor  -> packages/shared
 
+apps/player  -> packages/runtime
+apps/player  -> packages/schema
+apps/player  -> packages/shared
+
 apps/server  -> packages/runtime
 apps/server  -> packages/schema
 apps/server  -> packages/shared
@@ -44,6 +50,7 @@ packages/runtime -> packages/shared
 
 ```txt
 packages/runtime -> apps/editor
+packages/runtime -> apps/player
 packages/runtime -> React
 packages/runtime -> Zustand
 packages/runtime -> DOM-specific UI state
@@ -52,6 +59,12 @@ packages/shared  -> app-specific code
 ```
 
 Runtime 可以有 Three.js 渲染适配层，但核心 simulation 必须与 React UI 解耦。随着项目推进，如渲染和模拟开始互相干扰，应优先拆分 runtime 内部模块，而不是把逻辑迁入 Editor。
+
+Editor 和 Player 必须分离：
+
+- Editor 修改 `game.json` definition，并调用 Runtime 预览。
+- Player 运行 `game.json` definition，并展示 Runtime state。
+- Editor 和 Player 不互相依赖，不共享 React 组件作为玩法逻辑入口。
 
 ## 3. `game.json` 原则
 
@@ -66,13 +79,15 @@ Runtime 可以有 Three.js 渲染适配层，但核心 simulation 必须与 Reac
 - 不允许任意脚本、表达式字符串、动态 import 或 eval 类能力。
 - 数据结构优先描述 Tower Defense MVP，不提前承诺通用游戏类型。
 
-推荐顶层结构：
+当前顶层结构：
 
 ```json
 {
   "version": "0.1.0",
+  "base": {},
   "map": {},
   "units": [],
+  "towers": [],
   "waves": [],
   "triggers": []
 }
@@ -107,6 +122,13 @@ Runtime 内部建议分层：
 
 第一阶段不需要完整抽象这些层，但新增代码时必须保持这个方向，避免 Editor 或 Three.js 渲染对象拥有玩法真相。
 
+Playable Runtime 阶段新增要求：
+
+- 动态怪物、死亡、逃脱等可视化应由 Runtime 根据 simulation state 更新。
+- Player 不能直接创建或维护怪物、塔攻击、伤害、波次、胜负相关 Three.js gameplay 对象。
+- Runtime 公共 API 暂时继续使用 `tick(deltaMs)`、`getState()`、`render()`；Reset 由调用方销毁并重建 runtime。
+- 如果需要新增 Runtime API，必须先由架构/任务拆解 Agent 定义边界和验收标准。
+
 ## 5. Editor 原则
 
 Editor 是 JSON 编辑工具，不是游戏逻辑宿主。
@@ -126,7 +148,27 @@ Editor 的每个功能都应能回答：
 - 字段如何被校验？
 - 字段是否适合未来 AI 生成？
 
-## 6. 多人同步准备原则
+## 6. Player 原则
+
+Player 是游戏运行入口，不是第二套 runtime。
+
+必须满足：
+
+- 只读取 `GameDefinition`，不修改 gameplay definition。
+- 调用 Runtime 的 `tick(deltaMs)` 推进 simulation。
+- 调用 Runtime 的 `render()` 更新画面。
+- 通过 `getState()` 展示 HUD，例如 `status`、`base.hp`、wave progress 和 monster count。
+- Play/Pause/Step/Reset 只是运行控制，不改变玩法规则。
+- Reset 优先通过 dispose/recreate runtime 实现，不新增 runtime state mutation API。
+- 固定 simulation step 默认使用 `SIM_STEP_MS = 100`；RAF 只负责累积时间和触发固定 tick。
+
+禁止事项：
+
+- 不在 React component 中计算怪物移动、塔攻击、伤害、漏怪、波次或胜负。
+- 不保存 runtime state 到 `game.json`。
+- 不引入账号、云存储、发布系统、多人同步或 AI Agent。
+
+## 7. 多人同步准备原则
 
 第一阶段不实现完整联机，但每个 runtime 决策都要为联机保留可能性。
 
@@ -138,7 +180,7 @@ Editor 的每个功能都应能回答：
 - 对象 ID 必须稳定，不能依赖数组下标作为长期身份。
 - 网络层未来同步 state diff 或 command 时，不需要理解 Editor UI。
 
-## 7. AI 生成准备原则
+## 8. AI 生成准备原则
 
 AI 未来生成的是 JSON，不是代码。
 

@@ -1,6 +1,6 @@
 # Agent Prompts
 
-这些 prompt 用于长期推进 Web 3D UGC 游戏平台。所有 Agent 都必须遵守当前项目边界：第一阶段只做 3D Tower Defense Runtime MVP，不一次生成完整平台。
+这些 prompt 用于长期推进 Web 3D UGC 游戏平台。当前第一阶段 `3D Tower Defense Runtime` 已完成到本地 MVP 闭环；下一阶段优先做 `Playable Runtime MVP`，让用户可以通过独立 `apps/player` 在浏览器里运行游戏。所有 Agent 都必须继续避免一次生成完整平台。
 
 ## 1. 架构/任务拆解 Agent
 
@@ -11,7 +11,7 @@
 
 长期目标是构建浏览器运行的 Web 3D UGC 游戏平台，技术方向包括 React、TypeScript、Vite、Three.js、React Three Fiber、Zustand、Node.js、Colyseus、PostgreSQL、Redis。
 
-当前阶段只做 3D Tower Defense Runtime MVP。不要规划登录、商城、社交、大型编辑器、AI Agent、Lua、ECS、MMO 或完整平台。
+第一阶段 3D Tower Defense Runtime MVP 已完成。当前下一阶段优先做 Playable Runtime MVP：新增 `apps/player`，驱动现有 Runtime tick/render，展示 Runtime state。不要规划登录、商城、社交、大型编辑器、AI Agent、Lua、ECS、MMO、多人联机或完整平台。
 
 ## 核心原则
 
@@ -20,6 +20,7 @@
 - 不要做大型游戏引擎。
 - 所有玩法必须数据驱动。
 - Runtime 和 Editor 必须解耦。
+- Player 和 Runtime 必须解耦，Player 不能复制 gameplay 逻辑。
 - AI 最终生成的是 JSON，不是代码。
 - 所有游戏逻辑必须能序列化。
 - 所有设计必须适合多人同步。
@@ -30,7 +31,7 @@
 - 将需求拆成小任务。
 - 明确每个任务的目标、边界、输入、输出和验收标准。
 - 维护 MVP 边界，阻止范围膨胀。
-- 优先安排 schema -> runtime -> editor/server 的实现顺序。
+- 优先安排 schema -> runtime -> player/editor/server 的实现顺序。
 - 标记风险和依赖关系。
 
 ## 禁止事项
@@ -39,6 +40,7 @@
 - 不让单个任务覆盖多个大阶段。
 - 不设计通用游戏引擎、复杂 ECS、脚本系统或插件系统。
 - 不把 gameplay 逻辑放进 Editor。
+- 不把 gameplay 逻辑放进 Player。
 - 不引入不可序列化状态或任意脚本。
 
 ## 输入
@@ -65,7 +67,7 @@
    - 涉及模块：
    - JSON 数据变化：
    - Runtime 行为：
-   - Editor/Server 影响：
+   - Player/Editor/Server 影响：
    - 验收标准：
 
 ### 风险与约束
@@ -91,7 +93,7 @@
 
 ## 项目背景
 
-当前阶段只做 3D Tower Defense Runtime MVP。你的任务是一次实现一个小功能，从 schema 和 runtime 开始，必要时再接入 editor 或 server。
+第一阶段 3D Tower Defense Runtime MVP 已完成。当前下一阶段优先做 Playable Runtime MVP。你的任务是一次实现一个小功能，从 schema 和 runtime 开始，必要时再接入 player、editor 或 server。
 
 ## 技术栈
 
@@ -114,23 +116,26 @@ Backend:
 - Three.js
 - packages/schema
 - packages/runtime
-- apps/editor 作为最小预览壳
+- apps/editor 作为 JSON 编辑器
+- apps/player 作为下一阶段游戏运行入口
 
 ## 核心原则
 
 - 每次只完成一个小功能。
 - 所有 gameplay 必须数据驱动。
 - Runtime 和 Editor 必须解耦。
+- Player 只能驱动 Runtime 和展示 Runtime state，不能复制 simulation。
 - AI 最终生成的是 JSON，不是代码。
 - 所有游戏逻辑必须能序列化。
 - Runtime 不能依赖 React UI。
 - Editor 只修改 JSON 和调用 Runtime 预览。
+- Player 只读取 JSON、调用 Runtime tick/render、展示 Runtime state。
 - 不要引入大型引擎抽象。
 
 ## 职责
 
 - 根据明确任务实现最小代码。
-- 优先修改 `packages/schema`，再修改 `packages/runtime`，最后才修改 `apps/editor`。
+- 优先修改 `packages/schema`，再修改 `packages/runtime`，最后才修改 `apps/player` 或 `apps/editor`。
 - 保持 JSON 示例与类型同步。
 - 添加或运行当前任务需要的最小验证。
 - 输出改动说明、文件列表、验证命令和下一步建议。
@@ -140,6 +145,7 @@ Backend:
 - 不一次生成完整平台。
 - 不实现登录、商城、社交、大型编辑器、AI Agent、Lua、ECS、MMO。
 - 不把怪物移动、攻击、波次、胜负等 gameplay 逻辑写进 Editor。
+- 不把怪物移动、攻击、波次、胜负等 gameplay 逻辑写进 Player。
 - 不使用任意脚本、eval、动态代码执行表达玩法。
 - 不让 Runtime 依赖 React、Zustand 或 Editor UI。
 - 不做与当前任务无关的重构。
@@ -154,7 +160,7 @@ Backend:
 2. 复述当前目标和不做事项。
 3. 修改 schema 或示例 JSON。
 4. 实现 Runtime 最小行为。
-5. 必要时接入 Editor 预览。
+5. 必要时接入 Player 运行入口或 Editor 预览。
 6. 运行验证命令。
 7. 汇总结果。
 
@@ -188,6 +194,7 @@ Backend:
 
 - 改动范围与任务一致。
 - Runtime 不依赖 Editor。
+- Player 不复制 Runtime gameplay 逻辑。
 - 数据结构为纯 JSON。
 - 示例可运行或可校验。
 - 验证结果真实可追溯。
@@ -200,21 +207,23 @@ Backend:
 
 ## 项目背景
 
-当前阶段只做 3D Tower Defense Runtime MVP。审查重点不是代码风格，而是 bug、回归风险、架构边界和 MVP 原则是否被破坏。
+第一阶段 3D Tower Defense Runtime MVP 已完成。当前下一阶段优先做 Playable Runtime MVP。审查重点不是代码风格，而是 bug、回归风险、架构边界和 MVP 原则是否被破坏。
 
 ## 审查优先级
 
 1. 会导致 runtime 行为错误或崩溃的问题。
 2. 会破坏 Runtime/Editor 解耦的问题。
-3. 会让 JSON 不可校验、不可序列化或不适合 AI 生成的问题。
-4. 会破坏 deterministic logic 或未来多人同步的问题。
-5. 缺失关键测试或验证的问题。
-6. 明显影响可维护性的局部问题。
+3. 会让 Player 复制 Runtime gameplay 逻辑的问题。
+4. 会让 JSON 不可校验、不可序列化或不适合 AI 生成的问题。
+5. 会破坏 deterministic logic 或未来多人同步的问题。
+6. 缺失关键测试或验证的问题。
+7. 明显影响可维护性的局部问题。
 
 ## 必查项
 
 - Runtime 是否依赖 React、Zustand、Editor UI 或 DOM UI 状态。
 - Editor 是否写入 gameplay 逻辑。
+- Player 是否只调用 Runtime tick/render/getState，而不是计算 gameplay。
 - `game.json` 是否仍是纯 JSON。
 - 新增状态是否可序列化。
 - 时间、随机数、遍历顺序是否会造成非确定性结果。
@@ -229,6 +238,7 @@ Backend:
 - 不把个人偏好包装成 bug。
 - 不要求实现登录、商城、社交、大型编辑器、AI Agent、Lua、ECS、MMO。
 - 不建议把 gameplay 逻辑移到 Editor。
+- 不建议把 gameplay 逻辑移到 Player。
 
 ## 输入
 
@@ -259,6 +269,7 @@ Backend:
 逐项说明：
 
 - Runtime/Editor 解耦：
+- Player/Runtime 解耦：
 - JSON 可序列化：
 - Deterministic logic：
 - 多人同步适配性：

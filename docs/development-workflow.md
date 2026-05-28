@@ -7,7 +7,7 @@
 1. 明确当前目标。
 2. 明确 `game.json` 数据变化。
 3. 明确 Runtime 行为变化。
-4. 明确 Editor 或 Server 是否需要接入。
+4. 明确 Editor、Player 或 Server 是否需要接入。
 5. 实现最小代码。
 6. 运行针对性验证。
 7. 更新示例 JSON 和相关文档。
@@ -25,7 +25,7 @@
 2. 更新示例 `game.json`。
 3. 在 `packages/runtime` 中消费该字段。
 4. 添加最小验证或测试。
-5. 只在 Runtime 行为可用后，再接入 Editor UI。
+5. 只在 Runtime 行为可用后，再接入 Editor 或 Player UI。
 6. 如未来涉及联机，再接入 `apps/server`。
 
 禁止流程：
@@ -44,6 +44,7 @@
 JSON 数据变化：
 Runtime 行为：
 Editor 影响：
+Player 影响：
 Server 影响：
 验证方式：
 不做事项：
@@ -56,6 +57,7 @@ Server 影响：
 JSON 数据变化：`map.paths[]` 定义路径点，`waves[]` 引用单位类型和路径 ID。
 Runtime 行为：固定 tick 推进怪物路径进度。
 Editor 影响：本任务不做 Editor。
+Player 影响：本任务不做 Player。
 Server 影响：本任务不做 Server。
 验证方式：运行 unit test，确认相同 tick 后怪物位置一致。
 不做事项：不做攻击、不做波次 UI、不做联机。
@@ -70,6 +72,7 @@ Server 影响：本任务不做 Server。
 - Demo 或示例 JSON 可运行。
 - `game.json` 示例已同步。
 - Runtime 与 Editor 仍然解耦。
+- Player 没有复制 Runtime gameplay 逻辑。
 - 新增 gameplay 状态可序列化。
 - 文档中相关路线图或流程说明已更新。
 - 输出中说明改动文件、验证命令和下一步建议。
@@ -78,7 +81,7 @@ Server 影响：本任务不做 Server。
 
 ## 5. 禁止事项
 
-第一阶段禁止：
+当前阶段通用禁止：
 
 - 一次生成完整平台。
 - 建设大型通用游戏引擎。
@@ -88,9 +91,46 @@ Server 影响：本任务不做 Server。
 - 提前建设大型编辑器。
 - 为未来 AI Agent 设计复杂自动化流程。
 - 把 gameplay 逻辑写进 Editor。
+- 把 gameplay 逻辑写进 Player。
 - 让 Runtime 依赖 React、Zustand 或 UI 组件。
 
-## 6. Agent 协作流程
+## 6. Playable Runtime 工作流
+
+第二阶段目标是新增 `apps/player`，把现有 Runtime 变成浏览器里可运行的游戏入口。
+
+默认顺序：
+
+1. 先让 `packages/runtime` 能根据 simulation state 渲染动态实体。
+2. 再创建最小 `apps/player` shell，加载当前 sample `GameDefinition` 并挂载 Runtime。
+3. 再实现 Player 的 Play/Pause/Step/Reset 控制。
+4. 再实现 HUD，展示 `runtime.getState()` 的 `status`、`base.hp`、wave progress 和 monster count。
+5. 最后支持导入本地 `game.json` 并补浏览器 smoke。
+
+每个 Player 功能开始前必须写清：
+
+```md
+当前目标：
+使用哪个 GameDefinition：
+如何推进 tick：
+如何展示 getState：
+Runtime 行为变化：
+Player UI 影响：
+验证方式：
+不做事项：
+```
+
+Playable Runtime 阶段默认约束：
+
+- 第一切片不改 `game.json` schema。
+- Player 初始数据来源先使用当前 sample `GameDefinition`。
+- Runtime 公共 API 暂不扩张，继续使用 `tick(deltaMs)`、`getState()`、`render()`。
+- Reset 先由 Player dispose/recreate runtime 实现，不新增 `reset()` API。
+- Player loop 使用固定步进默认值 `SIM_STEP_MS = 100`。
+- RAF 只负责累积时间和触发固定 tick，不能让 gameplay 直接依赖帧率。
+- 动态实体渲染放在 Runtime 内，Player 不直接创建怪物或攻击相关 Three.js 对象。
+- 不做多人联机、账号、发布、云存储、AI Agent、Lua、ECS 或大型编辑器。
+
+## 7. Agent 协作流程
 
 推荐顺序：
 
@@ -130,7 +170,7 @@ Server 影响：本任务不做 Server。
 
 - 一次只实现一个任务。
 - 优先 schema/runtime，再接 UI。
-- 不把逻辑写进 Editor。
+- 不把逻辑写进 Editor 或 Player。
 
 ### 测试/代码审查阶段
 
@@ -147,7 +187,7 @@ Server 影响：本任务不做 Server。
 - 不要求超出当前阶段的大型重构。
 - 不把偏好包装成 bug。
 
-## 7. 分支与提交建议
+## 8. 分支与提交建议
 
 默认分支命名：
 
@@ -169,7 +209,7 @@ feat(runtime): 支持基础地图渲染
 test(schema): 补充 game.json 校验用例
 ```
 
-## 8. 验证策略
+## 9. 验证策略
 
 按风险选择验证等级：
 
@@ -180,3 +220,11 @@ test(schema): 补充 game.json 校验用例
 - Level 4：准备合并或发布前，运行完整 build/test/lint。
 
 当前项目早期允许验证轻量，但必须有证据。没有验证证据时，只能说“尚未验证”。
+
+Playable Runtime 阶段新增 smoke 要求：
+
+- 打开 Player 页面后，地图可以渲染。
+- Play 可以推进状态，Pause 可以停止推进。
+- Step 推进一次固定步进。
+- Reset 回到初始状态。
+- HUD 与 `runtime.getState()` 一致。

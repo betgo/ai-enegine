@@ -1,6 +1,6 @@
 # ai-enegine
 
-Web 3D UGC 游戏平台的第一阶段 MVP。当前只做 **3D Tower Defense Runtime**：用纯 JSON 描述地图与玩法，独立 Runtime 读取 JSON 并用 Three.js 渲染基础 3D 地图，同时维护 deterministic simulation state；Editor 只负责修改、预览、导入和导出 JSON。
+Web 3D UGC 游戏平台的第一阶段 MVP。当前已完成 **3D Tower Defense Runtime** 本地闭环：用纯 JSON 描述地图与玩法，独立 Runtime 读取 JSON 并用 Three.js 渲染基础 3D 地图，同时维护 deterministic simulation state；Editor 只负责修改、预览、导入和导出 JSON。
 
 ## 当前 MVP 范围
 
@@ -19,6 +19,12 @@ Web 3D UGC 游戏平台的第一阶段 MVP。当前只做 **3D Tower Defense Run
 - Lua、脚本系统、ECS、MMO。
 - 完整多人联机。
 - 云存储、发布系统、自动保存、版本历史。
+
+下一阶段：
+
+- 新增 `apps/player` 作为浏览器游戏运行入口。
+- Player 将读取 `GameDefinition`，驱动 Runtime `tick(deltaMs)` / `render()`，并展示 `getState()`。
+- 当前仓库还没有 `apps/player`；现在运行的是 Editor 和 Runtime 预览，不是完整可玩入口。
 
 ## 目录结构
 
@@ -48,6 +54,8 @@ npm install
 ```bash
 npm run dev -w apps/editor
 ```
+
+当前只有 Editor 启动入口。未来真正运行游戏的入口会是 `apps/player`。
 
 默认地址：
 
@@ -83,4 +91,4 @@ npm run build
 
 ## 当前状态
 
-`docs/project-plan.md` 第一阶段的阶段 1-10 已完成到本地 MVP 闭环。后续应基于现有 schema/runtime/editor 小步推进，不要直接扩成完整 UGC 平台。
+`docs/project-plan.md` 第一阶段的阶段 1-10 已完成到本地 MVP 闭环。下一阶段已规划为 `Playable Runtime MVP`：新增 `apps/player`，先把现有 runtime simulation 变成可开始、暂停、步进、重置并可观察 HUD 的浏览器运行入口。
