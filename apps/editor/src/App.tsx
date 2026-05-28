@@ -6,6 +6,10 @@ import {
 } from "@ai-enegine/runtime";
 import { validateGameDefinition, type GameDefinition } from "@ai-enegine/schema";
 import {
+  exportGameJson,
+  importGameJson
+} from "./browser-file";
+import {
   addPathPoint,
   addTowerSlot,
   removePathPoint,
@@ -13,11 +17,13 @@ import {
   updatePathPoint,
   updateTowerSlot
 } from "./editor-state";
+import { NumberField } from "./NumberField";
 import sampleGame from "./game.sample.json";
 
 export function App() {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const runtimeRef = useRef<TowerDefenseRuntime | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sceneSummary, setSceneSummary] = useState<SceneSummary | null>(null);
   const [draftGame, setDraftGame] = useState<GameDefinition>(() => structuredClone(sampleGame as GameDefinition));
@@ -77,6 +83,31 @@ export function App() {
             <p className={validation.ok ? "status" : "error"}>{validationMessage}</p>
             {error ? <p className="error">{error}</p> : null}
           </header>
+
+          <section className="editor-section" aria-labelledby="file-actions-heading">
+            <h2 id="file-actions-heading">File</h2>
+            <div className="action-row">
+              <button disabled={!validation.ok} type="button" onClick={() => exportGameJson(draftGame, setError)}>
+                Export JSON
+              </button>
+              <button type="button" onClick={() => fileInputRef.current?.click()}>
+                Import JSON
+              </button>
+              <input
+                ref={fileInputRef}
+                accept="application/json,.json"
+                className="hidden-file-input"
+                type="file"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  event.currentTarget.value = "";
+                  if (file) {
+                    void importGameJson(file, setDraftGame, setError);
+                  }
+                }}
+              />
+            </div>
+          </section>
 
           <section className="editor-section" aria-labelledby="map-summary-heading">
             <h2 id="map-summary-heading">Runtime</h2>
@@ -203,30 +234,5 @@ export function App() {
         </aside>
       </section>
     </main>
-  );
-}
-
-interface NumberFieldProps {
-  label: string;
-  min: number;
-  value: number;
-  onChange(value: number): void;
-}
-
-function NumberField({ label, min, value, onChange }: NumberFieldProps) {
-  return (
-    <label className="number-field">
-      <span>{label}</span>
-      <input
-        min={min}
-        step={1}
-        type="number"
-        value={value}
-        onChange={(event) => {
-          const nextValue = event.currentTarget.valueAsNumber;
-          onChange(Number.isFinite(nextValue) ? nextValue : 0);
-        }}
-      />
-    </label>
   );
 }

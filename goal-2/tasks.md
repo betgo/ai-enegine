@@ -498,3 +498,86 @@
   - 已运行 `npm run test`，通过：schema 22 tests，runtime 39 tests，editor 7 tests。
   - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
   - 自检：阶段 9 仍只修改 JSON definition 并调用 Runtime 预览；未实现阶段 10 保存/加载。
+
+### 任务 26：架构/任务拆解 Agent 拆解阶段 10
+
+- 状态：complete
+- 目标：让架构/任务拆解 Agent 基于阶段 10“保存/加载地图”拆出最小任务。
+- 验证：输出包含当前目标、范围边界、任务拆解、风险与约束、推荐下一步。
+- 执行记录：
+  - 已派发架构/任务拆解 Agent `Beauvoir`，只读检查 docs、goal 记录、Editor 与 schema。
+  - 阶段 10 被收敛为单个最小任务：为现有 Editor 增加本地 `game.json` 导入/导出闭环。
+  - 导出边界：使用浏览器 `Blob` + download，只允许导出当前 schema-valid 的 `draftGame`；不能静默导出 `previewGame`，不能导出 runtime state、sceneSummary 或不可序列化对象。
+  - 导入边界：使用 file input 读取 JSON 文本，流程为 `read text -> JSON.parse -> validateGameDefinition -> 成功后替换 draftGame`；失败时保留当前 `draftGame` 和 `previewGame`，只展示错误。
+  - JSON 数据变化：无。仍然只读写完整 `GameDefinition` / `game.json`，不新增本地持久化字段，不混入 simulation state。
+  - 本次明确不做：localStorage、自动保存、最近文件列表、版本历史、撤销恢复、多地图管理、账号、云存储、发布系统、Server、登录、商城、社交、AI Agent、Lua、ECS、MMO。
+  - 推荐下一步：交给全栈开发 Agent 在 `apps/editor` 实现 Blob/download 与 file input 导入，并补成功导入、语法错误、schema 错误、无效 draft 不可导出的测试和浏览器 smoke。
+  - 已关闭架构/任务拆解 Agent。
+  - 自检：对任务 26 当前拆解有 100% 信心；范围符合阶段 10，不越界到发布或云存储。
+
+### 任务 27：全栈开发 Agent 实现阶段 10 最小切片
+
+- 状态：complete
+- 目标：实现本地导出和导入 `game.json`。
+- 验证：editor 定向测试、项目 typecheck/test/build、可行浏览器 smoke。
+- 执行记录：
+  - 已按 TDD 新增 `apps/editor/src/game-file.test.ts`，先确认缺少 `game-file` helper、导出无效 draft 不会失败等测试失败。
+  - 已新增 `apps/editor/src/game-file.ts`，封装纯函数：`createGameJsonDownload` 与 `parseImportedGameJson`。
+  - `createGameJsonDownload` 只接受 schema-valid `GameDefinition`，返回格式化 JSON 文本和稳定文件名 `${game.map.id}.game.json`；无效 draft 返回错误。
+  - `parseImportedGameJson` 先 `JSON.parse`，再调用 `validateGameDefinition`；语法错误或 schema 错误均返回错误，不返回 game definition。
+  - 已新增 `apps/editor/src/browser-file.ts`，隔离浏览器 `Blob` 下载与 `File.text()` 导入逻辑，避免 `App.tsx` 继续膨胀。
+  - 已新增 `apps/editor/src/NumberField.tsx`，拆出数字输入组件，让 `App.tsx` 低于 300 行。
+  - 已更新 `apps/editor/src/App.tsx`：新增 File 区块、Export JSON、Import JSON、隐藏 file input；无效 draft 时禁用导出；导入失败只显示错误，导入成功替换 `draftGame` 并沿用现有 preview 同步链路。
+  - 已更新 `apps/editor/src/styles.css`，补充文件操作按钮布局。
+  - 已运行 `npx vitest run src/game-file.test.ts --root apps/editor`，先失败后修复通过：5 tests。
+  - 已运行文件长度检查：`wc -l apps/editor/src/App.tsx apps/editor/src/NumberField.tsx apps/editor/src/browser-file.ts apps/editor/src/game-file.ts apps/editor/src/editor-state.ts apps/editor/src/*.test.ts apps/editor/src/styles.css`，所有检查文件均低于 300 行。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 39 tests，editor 12 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 已启动本地 dev server 做浏览器 smoke：确认页面可打开、File 区块和导入/导出按钮可见、编辑 draft 可更新 preview、控制台无 error。
+  - 浏览器 smoke 限制：Codex in-app browser 不支持 download 事件，且本环境 locator 没有 `setInputFiles`，因此无法完整自动化导出文件和上传文件；导出内容、成功导入、语法错误、schema 错误、无效 draft 不可导出由 editor 单元测试覆盖。
+  - 自检：阶段 10 初版只处理本地 JSON 文件导入/导出，未引入 localStorage、账号、云存储或发布系统。
+
+### 任务 28：测试/代码审查 Agent 审查阶段 10
+
+- 状态：complete
+- 目标：审查阶段 10 改动，确认保存/加载只处理纯 `GameDefinition` JSON 且未越界。
+- 验证：输出 findings、test gaps、architecture check、recommendation。
+- 执行记录：
+  - 已派发测试/代码审查 Agent `Nash` 只读审查阶段 10 diff。
+  - Findings P1：导入/导出只依赖 `validateGameDefinition`，但 validator 不拒绝未知字段；如果 draft 或导入文件混入 `runtimeState`、`sceneSummary` 等 schema 外字段，导出会原样落盘，导入会带回 `draftGame`，削弱纯 `GameDefinition` 文件边界。
+  - Test Gaps：缺少额外字段不能通过 import/export 的测试；缺少 App/browser-file 层失败导入不调用 `setDraftGame` 的测试；App 层禁用导出未做组件测试。
+  - Architecture Check：Runtime/Editor 解耦、MVP 边界通过；纯 `GameDefinition` 文件 contract 需修复 P1。
+  - Recommendation：需要先修复 findings。
+  - 已关闭测试/代码审查 Agent。
+
+### 任务 29：根据阶段 10 审查结果修复并最终验证
+
+- 状态：complete
+- 目标：收紧导入/导出边界，确保只保存/加载 canonical `GameDefinition`。
+- 验证：`npm run typecheck`、`npm run test`、`npm run build` 通过。
+- 执行记录：
+  - 已按 TDD 补充失败测试：导出带 `runtimeState` / `sceneSummary` 的对象时，导出 JSON 不包含这些额外字段。
+  - 已按 TDD 补充失败测试：导入带 `runtimeState` / `sceneSummary` 的 JSON 时应失败并返回 `unknown fields` 错误。
+  - 已在 `apps/editor/src/game-file.ts` 中新增 canonical `GameDefinition` pick，导出前只保留 schema 顶层字段。
+  - 已在导入边界拒绝 schema 外顶层字段，避免外部文件污染 `draftGame` / `previewGame`。
+  - 已运行 `npx vitest run src/game-file.test.ts --root apps/editor`，先失败后修复通过：7 tests。
+  - App/jsdom 集成测试未新增，因为当前项目没有 jsdom/testing-library 依赖；核心边界由 `game-file` helper 测试、`browser-file` 简单状态流和可行浏览器 smoke 覆盖，避免为最后 MVP 阶段引入额外依赖。
+  - 已运行文件长度检查：`wc -l apps/editor/src/App.tsx apps/editor/src/NumberField.tsx apps/editor/src/browser-file.ts apps/editor/src/game-file.ts apps/editor/src/editor-state.ts apps/editor/src/editor-state.test.ts apps/editor/src/game-file.test.ts apps/editor/src/styles.css`，所有检查文件均低于 300 行。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 39 tests，editor 14 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 自检：对阶段 10 当前实现有 100% 信心；保存/加载只处理 canonical `GameDefinition`，未保存 runtime state，未引入 localStorage、云存储、发布系统或账号能力。
+
+### Debug 检查 F：任务 26 到任务 29 后全面检查
+
+- 状态：complete
+- 检查项：保存/加载边界、canonical JSON、导入失败安全性、runtime/editor 解耦、MVP 边界、文件尺寸、验证证据。
+- 执行记录：
+  - 保存/加载边界：阶段 10 仅在 `apps/editor` 增加本地 `game.json` 导入/导出；导出使用浏览器 `Blob` + download，导入使用 file input + `File.text()`。
+  - canonical JSON：`createGameJsonDownload` 导出前只保留 `version`、`base`、`map`、`units`、`towers`、`waves`、`triggers`；导入时拒绝 schema 外顶层字段，避免 `runtimeState` 或 `sceneSummary` 污染定义。
+  - 导入失败安全性：`parseImportedGameJson` 对 JSON 语法错误、schema 错误和 unknown fields 均返回错误；`importGameJson` 失败时不调用 `setDraftGame`，保留当前 draft/preview。
+  - runtime/editor 解耦：保存/加载只读写 `GameDefinition` JSON；Runtime simulation state、scene summary、Three.js 对象和 gameplay 逻辑均没有写入文件。
+  - MVP 边界：未引入 localStorage、自动保存、最近文件、版本历史、多地图管理、账号、云存储、发布系统、Server、登录、商城、社交、AI Agent、Lua、ECS 或 MMO。
+  - 文件尺寸：已检查阶段 10 相关 Editor 文件，均低于 300 行。
+  - 验证证据：`npm run typecheck`、`npm run test`、`npm run build` 均通过；Vite chunk size warning 为非阻塞体积提示。
