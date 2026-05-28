@@ -428,3 +428,73 @@
   - MVP 边界：未引入 pause/resume、reset/snapshot restore、完整状态机、Editor UI、保存/加载、Server、AI Agent、Lua、ECS、MMO。
   - 文件尺寸：所有检查文件均低于 300 行。
   - 验证证据：`npm run typecheck`、`npm run test`、`npm run build` 均通过；Vite chunk size warning 为非阻塞体积提示。
+
+### 任务 22：架构/任务拆解 Agent 拆解阶段 9
+
+- 状态：complete
+- 目标：让架构/任务拆解 Agent 基于阶段 9“简单地图编辑器”拆出最小任务。
+- 验证：输出包含当前目标、范围边界、任务拆解、风险与约束、推荐下一步。
+- 执行记录：
+  - 已派发架构/任务拆解 Agent `Dirac`，只读检查 docs、goal 记录、Editor、schema、runtime 与 sample。
+  - 阶段 9 被收敛为单个最小任务：把 `apps/editor` 从只读 sample 预览推进成最小地图编辑壳。
+  - Editor 最小状态：在本地 React state 中维护当前 `GameDefinition` draft，并维护最近一次有效 `previewGame`。
+  - JSON 最小编辑范围：`map.size.width/height`、`map.paths[].points[*].x/y`、`map.towerSlots[*].x/y`；保持 path id、tower slot id 和玩法引用稳定。
+  - Runtime 预览方式：只在 JSON 校验通过后，销毁旧 runtime 并用当前有效 JSON 重新 `createTowerDefenseRuntime()`，不设计 runtime 增量更新 API。
+  - 关键约束：Editor 同步重算 `map.tiles` 这个派生字段，避免路径线/塔位 marker 与 tile 预览脱节。
+  - 本次明确不做：保存/加载文件、登录、商城、社交、AI Agent、Lua、ECS、MMO、Server 联机、多路径管理器、大型编辑器框架、Zustand/全局 store、撤销重做、Runtime 热更新/diff API、玩法逻辑 UI。
+  - 推荐下一步：交给全栈开发 Agent 只修改 `apps/editor`，实现 `draftGame + previewGame` 的最小地图编辑壳，同步重算 tiles，并完成 typecheck/test/build 与浏览器 smoke。
+  - 已关闭架构/任务拆解 Agent。
+  - 自检：对任务 22 当前拆解有 100% 信心；范围符合阶段 9，不越界到阶段 10。
+
+### 任务 23：全栈开发 Agent 实现阶段 9 最小切片
+
+- 状态：complete
+- 目标：实现简单地图编辑器，支持基础编辑并调用 Runtime 预览当前有效 JSON。
+- 验证：editor helper 测试、项目 typecheck/test/build、浏览器 smoke。
+- 执行记录：
+  - 已按 TDD 新增 `apps/editor/src/editor-state.test.ts`，先确认缺少 editor-state helper、tiles 同步、新增/删除能力和 tile 去重优先级时测试失败。
+  - 已新增 `apps/editor/src/editor-state.ts`，封装纯 JSON helper：`updateMapSize`、`updatePathPoint`、`addPathPoint`、`removePathPoint`、`updateTowerSlot`、`addTowerSlot`。
+  - 已让 helper 在路径点/塔位/尺寸变化后同步重算 `map.tiles`：保留 blocked tiles，按路径 tile 和 tower-slot tile 派生可视化 tile，并以 tower-slot 覆盖 path/blocked、path 覆盖 blocked 的顺序按坐标去重。
+  - 已更新 `apps/editor/src/App.tsx`：Editor 维护 `draftGame` 和最近一次有效 `previewGame`；只在 schema 校验通过时更新 `previewGame` 并重建 Runtime 预览。
+  - 已新增最小 UI：地图尺寸输入、路径点 x/y 编辑、路径点添加/删除、塔位 x/y 编辑、塔位添加、只读 `game.json` 预览、校验/运行时错误展示。
+  - 已更新 `apps/editor/src/styles.css`，让侧栏可滚动、控件尺寸稳定、移动端布局可用。
+  - 已给 `apps/editor/package.json` 增加 `test` 脚本，并将根级 `npm run test` 串上 Editor 测试，防止阶段 9 测试脱离主验证。
+  - 已运行 `npx vitest run src/editor-state.test.ts --root apps/editor`，先失败后修复通过：6 tests。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 39 tests，editor 6 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 已启动本地 dev server 并做浏览器 smoke：修改宽度、移动路径点、添加/删除路径点、移动塔位、添加塔位，确认 DOM/JSON 更新，控制台无 error。
+  - 第二次尝试针对 tile 覆盖优先级做浏览器复测时被浏览器安全策略拒绝，未绕过；该覆盖优先级由 editor-state 单元测试验证。
+  - 自检：阶段 9 初版实现只修改 JSON definition 并调用 Runtime 预览，未把 gameplay 逻辑写入 Editor，未实现保存/加载。
+
+### 任务 24：测试/代码审查 Agent 审查阶段 9
+
+- 状态：complete
+- 目标：审查阶段 9 改动，确认 Editor 只修改 JSON、调用 Runtime 预览，且未越界到保存/加载。
+- 验证：输出 findings、test gaps、architecture check、recommendation。
+- 执行记录：
+  - 已派发测试/代码审查 Agent `Herschel` 只读审查阶段 9 diff。
+  - Findings P1：`syncMapTiles` 若只从首条 path 派生 path tiles，会在多 path 地图编辑后抹掉非首条 path 的 tiles，造成 JSON 与 Runtime preview 脱节。
+  - Findings P1：`syncMapTiles` 若直接拼接 path/tower/blocked tiles，会生成同坐标多种 tile kind，Runtime 会重叠渲染 tile mesh，破坏派生 tiles 的 canonical 语义。
+  - Test Gaps：建议补多 path 保留测试、tile 冲突优先级测试，以及 App 层集成测试证明无效 draft 不更新 previewGame。
+  - Architecture Check：Runtime/Editor 解耦、JSON 可序列化、MVP 边界通过；tiles 派生规则需补强。
+  - Recommendation：需要先修复 findings。
+  - 已关闭测试/代码审查 Agent。
+
+### 任务 25：根据阶段 9 审查结果修复并最终验证
+
+- 状态：complete
+- 目标：补强 `map.tiles` canonical 派生规则和回归测试，运行最终验证并提交。
+- 验证：`npm run typecheck`、`npm run test`、`npm run build` 通过；已完成一次浏览器 smoke。
+- 执行记录：
+  - 已验证审查 P1 成立方向：阶段 9 的核心风险是 Editor 输出的 JSON definition 与 Runtime 预览脱节。
+  - 已在 `syncMapTiles` 中遍历所有 `map.paths` 派生 path tiles，不再只处理首条 path。
+  - 已按坐标 canonical 合并 tiles，优先级为 blocked 初始保留、path 覆盖 blocked、tower-slot 覆盖 path/blocked，避免同坐标重复 tile kind。
+  - 已补充 `deduplicates derived tiles with tower slots taking priority` 回归测试，覆盖 path/tower-slot 冲突。
+  - 已补充 `preserves derived tiles for every path when editing one path` 回归测试，覆盖多 path 编辑后其余 path tiles 保留。
+  - 未新增 App 层 jsdom 集成测试，因为当前项目没有 jsdom/testing-library 依赖；本阶段通过 helper 单测、浏览器 smoke、typecheck/build 覆盖核心行为，避免为 MVP 引入额外测试依赖。
+  - 已运行 `npx vitest run src/editor-state.test.ts --root apps/editor`，通过：7 tests。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 39 tests，editor 7 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 自检：阶段 9 仍只修改 JSON definition 并调用 Runtime 预览；未实现阶段 10 保存/加载。

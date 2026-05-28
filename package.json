@@ -10,7 +10,7 @@
   "scripts": {
     "build": "npm run build -w packages/schema && npm run build -w packages/runtime && npm run build -w apps/editor",
     "typecheck": "npm run typecheck -w packages/schema && npm run typecheck -w packages/runtime && npm run typecheck -w apps/editor",
-    "test": "npm run test -w packages/schema && npm run test -w packages/runtime"
+    "test": "npm run test -w packages/schema && npm run test -w packages/runtime && npm run test -w apps/editor"
   },
   "engines": {
     "node": ">=20.0.0"
