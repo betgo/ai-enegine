@@ -23,12 +23,15 @@ import {
 const TIME_EPSILON_MS = 0.000001;
 
 export interface RuntimeSimulationState {
+  status: RuntimeGameStatus;
   elapsedMs: number;
   base: RuntimeBaseState;
   monsters: RuntimeMonsterState[];
   towers: RuntimeTowerState[];
   waves: RuntimeWaveState[];
 }
+
+export type RuntimeGameStatus = "running" | "victory" | "defeat";
 
 export interface RuntimeBaseState {
   hp: number;
@@ -107,6 +110,10 @@ export function createTowerDefenseSimulation(game: GameDefinition): TowerDefense
         throw new Error("deltaMs must be a non-negative finite number");
       }
 
+      if (getGameStatus(state) !== "running") {
+        return;
+      }
+
       advanceSimulation(state, deltaMs);
     },
     getState() {
@@ -122,6 +129,9 @@ function advanceSimulation(
   let remainingMs = deltaMs;
 
   attackWithReadyTowers(state.towers, state.monsters);
+  if (getGameStatus(state) !== "running") {
+    return;
+  }
 
   while (remainingMs > 0) {
     const stepMs = getNextStepMs(state, remainingMs);
@@ -133,8 +143,16 @@ function advanceSimulation(
       remainingMs -= stepMs;
     }
 
+    if (getGameStatus(state) !== "running") {
+      break;
+    }
+
     spawnDueMonsters(state, state.elapsedMs);
     attackWithReadyTowers(state.towers, state.monsters);
+
+    if (getGameStatus(state) !== "running") {
+      break;
+    }
 
     if (stepMs <= TIME_EPSILON_MS) {
       break;
@@ -199,6 +217,7 @@ function createInitialSimulationState(
 
 function cloneSimulationState(state: InternalSimulationState): RuntimeSimulationState {
   return {
+    status: getGameStatus(state),
     elapsedMs: state.elapsedMs,
     base: {
       hp: state.base.hp,
@@ -228,4 +247,15 @@ function cloneSimulationState(state: InternalSimulationState): RuntimeSimulation
       completed: wave.completed
     }))
   };
+}
+
+function getGameStatus(state: InternalSimulationState): RuntimeGameStatus {
+  if (state.base.hp <= 0) {
+    return "defeat";
+  }
+
+  const allWavesCompleted = state.waves.every((wave) => wave.completed);
+  const hasActiveMonster = state.monsters.some((monster) => monster.status === "active");
+
+  return allWavesCompleted && !hasActiveMonster ? "victory" : "running";
 }

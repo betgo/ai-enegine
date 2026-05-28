@@ -348,3 +348,83 @@
   - MVP 边界：阶段 7 未实现完整 gameStatus/victory、手动开波、清怪后自动下一波、奖励/金币、随机刷怪、嵌套 spawns、trigger DSL、Editor 波次 UI、Server、保存/加载、AI Agent、Lua、ECS、MMO。
   - 文件尺寸：所有检查文件均低于 300 行。
   - 验证证据：`npm run typecheck`、`npm run test`、`npm run build` 均通过；Vite chunk size warning 为非阻塞体积提示。
+
+### 任务 18：架构/任务拆解 Agent 拆解阶段 8
+
+- 状态：complete
+- 目标：让架构/任务拆解 Agent 基于阶段 8“游戏状态管理”拆出最小任务。
+- 验证：输出包含当前目标、范围边界、任务拆解、风险与约束、推荐下一步。
+- 执行记录：
+  - 已派发架构/任务拆解 Agent `Maxwell`，只读检查 docs、goal 记录、schema、runtime、tests 与 sample。
+  - 阶段 8 被收敛为单个最小任务：为 runtime state 增加最小对局状态 contract。
+  - Runtime 最小状态：`RuntimeSimulationState.status: "running" | "victory" | "defeat"`。
+  - Runtime 最小行为：`defeat` 基于 `base.hp <= 0`；`victory` 基于所有 `waves.completed === true` 且没有 `active` monster；终局后 `tick()` 不再推进状态。
+  - JSON 数据变化：无。阶段 8 不需要修改 `game.json` definition。
+  - 本次明确不做：阶段 9 Editor UI、阶段 10 保存/加载、pause/resume、reset/snapshot restore、完整状态机框架、命令系统、事件总线、replay、手动开波、奖励/金币、建塔/升级/出售、Server 联机、登录、商城、社交、AI Agent、Lua、ECS、MMO。
+  - 风险约束：不能把阶段 8 误做成完整游戏状态机；`status` 必须由现有可序列化 state 推导，不能依赖渲染层或 UI；终局后继续结算会给未来多人同步和 replay 留下歧义。
+  - 推荐下一步：交给全栈开发 Agent 实现 `RuntimeSimulationState.status` 和终局 no-op，并补 running/victory/defeat、终局停止、definition/state 边界测试。
+  - 已关闭架构/任务拆解 Agent。
+  - 自检：对任务 18 当前拆解有 100% 信心；范围符合阶段 8，不越界到阶段 9 或阶段 10。
+
+### 任务 19：全栈开发 Agent 实现阶段 8 最小切片
+
+- 状态：complete
+- 目标：实现 runtime 最小游戏状态管理。
+- 验证：runtime 定向测试通过，项目 typecheck/test/build 通过。
+- 执行记录：
+  - 已按 TDD 新增 `packages/runtime/src/game-state.test.ts`，覆盖 `running`、`victory`、`defeat`、victory 后 `tick()` no-op、defeat 后 `tick()` no-op、definition 输入不被 simulation 回写。
+  - 已确认新增测试先失败：当前 state 缺少 `status`，终局后继续推进 `elapsedMs` 和 tower cooldown。
+  - 已在 `packages/runtime/src/simulation.ts` 新增 `RuntimeGameStatus` 与 `RuntimeSimulationState.status`。
+  - 已实现最小状态判定：`base.hp <= 0` 为 `defeat`；所有 waves completed 且没有 active monster 为 `victory`；其余为 `running`。
+  - 已让 `tick(deltaMs)` 在终局后 no-op，并在同一个大 tick 内命中终局时停止剩余时间推进，避免破坏 tick 分割等价性。
+  - 已在 `packages/runtime/src/index.ts` 导出 `RuntimeGameStatus` 类型，便于未来 Editor/Server 读取 state contract。
+  - 已同步既有精确 state 断言，加入 `status: "running"`。
+  - 已运行 `npm run test -w packages/runtime -- game-state`，先失败后修复通过：6 tests。
+  - 已运行 `npm run test -w packages/runtime`，通过：runtime 37 tests。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 37 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 自检：阶段 8 初版实现保持 runtime/editor 解耦，未修改 `game.json`，未实现 pause/resume/reset/snapshot 或 Editor UI。
+
+### 任务 20：测试/代码审查 Agent 审查阶段 8
+
+- 状态：complete
+- 目标：审查阶段 8 改动，确认 game status deterministic、可序列化且未越界到阶段 9。
+- 验证：输出 findings、test gaps、architecture check、recommendation。
+- 执行记录：
+  - 已派发测试/代码审查 Agent `Russell` 只读审查阶段 8 diff。
+  - Findings P1：`moveActiveMonsters()` 之后没有立即检查终局状态，若怪物在本次 step 内漏怪并使 `base.hp` 归零，同一大 tick 中后续到时 wave 仍会被 `spawnDueMonsters()` 生成，破坏 terminal no-op 语义。
+  - Test Gaps：建议补“终局边界上的 tick 分割等价性”断言，比较单个大 tick 跨过终局点与多个小 tick 在同一终局点收敛后的完整 state。
+  - Architecture Check：Runtime/Editor 解耦、JSON 可序列化、MVP 边界通过；deterministic 与多人同步适配性需先修复 P1。
+  - Recommendation：需要先修复 findings。
+  - 已关闭测试/代码审查 Agent。
+
+### 任务 21：根据阶段 8 审查结果修复并最终验证
+
+- 状态：complete
+- 目标：修复终局同 tick 继续 spawn/attack 的问题，补齐终局边界等价测试，并运行最终验证。
+- 验证：`npm run typecheck`、`npm run test`、`npm run build` 通过。
+- 执行记录：
+  - 已按 TDD 补充失败测试：`does not spawn later waves after defeat in the same tick`，确认 defeat 同 tick 仍会生成后续 wave。
+  - 已在 `advanceSimulation` 中于 `moveActiveMonsters()` 和 `advanceTowerCooldowns()` 后、`spawnDueMonsters()` 前立即检查终局状态，终局则停止本次 tick 的后续 spawn/attack。
+  - 已补充审查建议的终局边界等价测试：单个 `tick(1000)` 与 `tick(500)+tick(500)` 在 defeat 边界后得到相同完整 state。
+  - 已运行 `npm run test -w packages/runtime -- game-state`，先失败后修复通过：8 tests。
+  - 已运行文件长度检查：`wc -l packages/runtime/src/*.ts packages/schema/src/*.ts apps/editor/src/App.tsx apps/editor/src/main.tsx`，所有检查文件均低于 300 行。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 39 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 自检：对阶段 8 当前实现有 100% 信心；审查 P1 已修复，终局状态可序列化、deterministic，未实现阶段 9 Editor 或阶段 10 保存/加载。
+
+### Debug 检查 E：任务 18 到任务 21 后全面检查
+
+- 状态：complete
+- 检查项：game status 语义、终局 no-op、tick 分割等价性、definition/state 边界、runtime/editor 解耦、MVP 边界、文件尺寸。
+- 执行记录：
+  - game status 语义：`RuntimeSimulationState.status` 是纯字符串 union，只基于 `base.hp`、`waves.completed` 和 `monster.status` 推导，不写入 `game.json`。
+  - 终局 no-op：runtime 在 tick 开始和内部子步进命中终局后都会停止推进，避免终局后继续移动、spawn 或 attack。
+  - tick 分割等价性：已补充 victory/defeat/终局边界相关测试，确保大 tick 与拆分 tick 在关键终局边界收敛。
+  - definition/state 边界：已测试 `tick()` 不回写传入的 `GameDefinition`；`getState()` 仍返回纯 state snapshot。
+  - runtime/editor 解耦：阶段 8 改动仅在 `packages/runtime` 与 goal 记录，Editor 未写 gameplay 逻辑。
+  - MVP 边界：未引入 pause/resume、reset/snapshot restore、完整状态机、Editor UI、保存/加载、Server、AI Agent、Lua、ECS、MMO。
+  - 文件尺寸：所有检查文件均低于 300 行。
+  - 验证证据：`npm run typecheck`、`npm run test`、`npm run build` 均通过；Vite chunk size warning 为非阻塞体积提示。

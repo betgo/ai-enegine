@@ -45,6 +45,7 @@ describe("createTowerDefenseRuntime", () => {
     });
 
     expect(runtime.getState()).toEqual({
+      status: "running",
       elapsedMs: 0,
       base: {
         hp: 20,
@@ -236,6 +237,7 @@ describe("createTowerDefenseRuntime", () => {
     state.monsters[0].position.x = 9999;
 
     expect(runtime.getState()).toEqual({
+      status: "running",
       elapsedMs: 0,
       base: {
         hp: 20,
