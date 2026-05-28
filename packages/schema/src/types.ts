@@ -55,7 +55,6 @@ export type UnitKind = "monster";
 export interface MonsterUnitDefinition {
   id: string;
   kind: UnitKind;
-  pathId: string;
   speed: number;
   maxHp: number;
   leakDamage: number;
@@ -70,5 +69,14 @@ export interface TowerDefinition {
 }
 
 export type UnitDefinition = MonsterUnitDefinition;
-export type WaveDefinition = Record<string, never>;
+
+export interface WaveDefinition {
+  id: string;
+  startTimeMs: number;
+  unitId: string;
+  pathId: string;
+  count: number;
+  intervalMs: number;
+}
+
 export type TriggerDefinition = Record<string, never>;

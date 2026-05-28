@@ -24,7 +24,8 @@ import {
 export type { RuntimeMonsterState, RuntimeSimulationState } from "./simulation";
 export type {
   RuntimeBaseState,
-  RuntimeMonsterStatus
+  RuntimeMonsterStatus,
+  RuntimeWaveState
 } from "./simulation";
 
 export interface RuntimeRenderer {

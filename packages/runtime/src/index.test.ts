@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createTowerDefenseRuntime } from "./index";
-import { createRendererDouble, game } from "./test-helpers";
+import { createRendererDouble, game, withUnitsAsWave } from "./test-helpers";
 
 describe("createTowerDefenseRuntime", () => {
   it("creates a renderable scene from a game definition", () => {
@@ -38,7 +38,7 @@ describe("createTowerDefenseRuntime", () => {
     expect(renderer.dispose).toHaveBeenCalledTimes(1);
   });
 
-  it("initializes simulation state from units", () => {
+  it("initializes simulation state from waves", () => {
     const runtime = createTowerDefenseRuntime({
       game,
       rendererFactory: () => createRendererDouble()
@@ -52,7 +52,7 @@ describe("createTowerDefenseRuntime", () => {
       },
       monsters: [
         {
-          id: "monster-1",
+          id: "wave-1:0",
           pathId: "main",
           hp: 10,
           leakDamage: 3,
@@ -61,7 +61,15 @@ describe("createTowerDefenseRuntime", () => {
           status: "active"
         }
       ],
-      towers: []
+      towers: [],
+      waves: [
+        {
+          id: "wave-1",
+          spawnedCount: 1,
+          totalCount: 1,
+          completed: true
+        }
+      ]
     });
   });
 
@@ -140,9 +148,8 @@ describe("createTowerDefenseRuntime", () => {
           units: [
             ...game.units,
             {
-              id: "monster-1",
+              id: "monster-basic",
               kind: "monster",
-              pathId: "main",
               speed: 2,
               maxHp: 10,
               leakDamage: 1
@@ -151,7 +158,7 @@ describe("createTowerDefenseRuntime", () => {
         },
         rendererFactory: () => createRendererDouble()
       })
-    ).toThrow("duplicate unit id: monster-1");
+    ).toThrow("duplicate unit id: monster-basic");
   });
 
   it("rejects zero-length paths before creating simulation state", () => {
@@ -180,7 +187,15 @@ describe("createTowerDefenseRuntime", () => {
   it("moves monsters across multi-segment paths with linear interpolation", () => {
     const runtime = createTowerDefenseRuntime({
       game: {
-        ...game,
+        ...withUnitsAsWave([
+          {
+            id: "monster-zigzag",
+            kind: "monster",
+            speed: 2,
+            maxHp: 10,
+            leakDamage: 1
+          }
+        ], "zigzag"),
         map: {
           ...game.map,
           paths: [
@@ -193,17 +208,7 @@ describe("createTowerDefenseRuntime", () => {
               ]
             }
           ]
-        },
-        units: [
-          {
-            id: "monster-zigzag",
-            kind: "monster",
-            pathId: "zigzag",
-            speed: 2,
-            maxHp: 10,
-            leakDamage: 1
-          }
-        ]
+        }
       },
       rendererFactory: () => createRendererDouble()
     });
@@ -238,7 +243,7 @@ describe("createTowerDefenseRuntime", () => {
       },
       monsters: [
         {
-          id: "monster-1",
+          id: "wave-1:0",
           pathId: "main",
           hp: 10,
           leakDamage: 3,
@@ -247,7 +252,15 @@ describe("createTowerDefenseRuntime", () => {
           status: "active"
         }
       ],
-      towers: []
+      towers: [],
+      waves: [
+        {
+          id: "wave-1",
+          spawnedCount: 1,
+          totalCount: 1,
+          completed: true
+        }
+      ]
     });
   });
 

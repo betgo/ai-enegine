@@ -37,23 +37,10 @@ describe("validateGameDefinition", () => {
   it("accepts a valid monster unit definition", () => {
     const result = validateGameDefinition({
       ...validGame,
-      map: {
-        ...validGame.map,
-        paths: [
-          {
-            id: "main-path",
-            points: [
-              { x: 0, y: 0 },
-              { x: 7, y: 5 }
-            ]
-          }
-        ]
-      },
       units: [
         {
           id: "monster-1",
           kind: "monster",
-          pathId: "main-path",
           speed: 1,
           maxHp: 10,
           leakDamage: 1
@@ -71,7 +58,6 @@ describe("validateGameDefinition", () => {
         {
           id: "monster-1",
           kind: "boss",
-          pathId: "main",
           speed: 1,
           maxHp: 10,
           leakDamage: 1
@@ -90,7 +76,6 @@ describe("validateGameDefinition", () => {
         {
           id: "monster-1",
           kind: "monster",
-          pathId: "main",
           speed: 0,
           maxHp: -1,
           leakDamage: 0
@@ -107,20 +92,20 @@ describe("validateGameDefinition", () => {
   it("rejects unknown pathId", () => {
     const result = validateGameDefinition({
       ...validGame,
-      units: [
+      waves: [
         {
-          id: "monster-1",
-          kind: "monster",
+          id: "wave-1",
+          startTimeMs: 0,
+          unitId: "monster-1",
           pathId: "unknown-path",
-          speed: 1,
-          maxHp: 10,
-          leakDamage: 1
+          count: 1,
+          intervalMs: 1000
         }
       ]
     });
 
     expect(result.ok).toBe(false);
-    expect(result.errors).toContain("units[0].pathId must reference an existing map.paths id");
+    expect(result.errors).toContain("waves[0].pathId must reference an existing map.paths id");
   });
 
   it("rejects duplicate path ids", () => {
@@ -158,7 +143,6 @@ describe("validateGameDefinition", () => {
         {
           id: "monster-1",
           kind: "monster",
-          pathId: "main",
           speed: 1,
           maxHp: 10,
           leakDamage: 1
@@ -166,7 +150,6 @@ describe("validateGameDefinition", () => {
         {
           id: "monster-1",
           kind: "monster",
-          pathId: "main",
           speed: 1,
           maxHp: 10,
           leakDamage: 1
@@ -224,7 +207,6 @@ describe("validateGameDefinition", () => {
         {
           id: "monster-1",
           kind: "monster",
-          pathId: "main",
           speed: 1,
           maxHp: 10
         }
@@ -233,6 +215,83 @@ describe("validateGameDefinition", () => {
 
     expect(result.ok).toBe(false);
     expect(result.errors).toContain("units[0].leakDamage must be a positive number");
+  });
+
+  it("accepts a valid wave definition", () => {
+    const result = validateGameDefinition({
+      ...validGame,
+      units: [
+        {
+          id: "monster-basic",
+          kind: "monster",
+          speed: 1,
+          maxHp: 10,
+          leakDamage: 1
+        }
+      ],
+      waves: [
+        {
+          id: "wave-1",
+          startTimeMs: 0,
+          unitId: "monster-basic",
+          pathId: "main",
+          count: 3,
+          intervalMs: 1000
+        }
+      ]
+    });
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects duplicate wave ids and invalid wave numbers", () => {
+    const result = validateGameDefinition({
+      ...validGame,
+      waves: [
+        {
+          id: "wave-1",
+          startTimeMs: -1,
+          unitId: "monster-1",
+          pathId: "main",
+          count: 0,
+          intervalMs: 0
+        },
+        {
+          id: "wave-1",
+          startTimeMs: 0,
+          unitId: "monster-1",
+          pathId: "main",
+          count: 1.5,
+          intervalMs: 1000
+        }
+      ]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContain("waves[0].startTimeMs must be a non-negative number");
+    expect(result.errors).toContain("waves[0].count must be a positive integer");
+    expect(result.errors).toContain("waves[0].intervalMs must be a positive number");
+    expect(result.errors).toContain("waves[1].id must be unique");
+    expect(result.errors).toContain("waves[1].count must be a positive integer");
+  });
+
+  it("rejects waves that reference unknown unitId", () => {
+    const result = validateGameDefinition({
+      ...validGame,
+      waves: [
+        {
+          id: "wave-1",
+          startTimeMs: 0,
+          unitId: "unknown-unit",
+          pathId: "main",
+          count: 1,
+          intervalMs: 1000
+        }
+      ]
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.errors).toContain("waves[0].unitId must reference an existing units id");
   });
 
 });

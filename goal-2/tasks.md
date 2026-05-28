@@ -265,3 +265,86 @@
   - MVP 边界：阶段 6 未实现 waves、完整 gameStatus/victory、金币/奖励、塔建造/升级/出售、投射物/特效、Editor UI、Server、AI Agent、Lua、ECS、MMO。
   - 文件尺寸：已运行 `wc -l packages/runtime/src/*.ts packages/schema/src/*.ts apps/editor/src/App.tsx apps/editor/src/main.tsx`，所有检查文件均低于 300 行。
   - 验证证据：`npm run test -w packages/schema`、`npm run test -w packages/runtime`、`npm run typecheck`、`npm run test`、`npm run build` 均通过；Vite chunk size warning 为非阻塞体积提示。
+
+### 任务 14：架构/任务拆解 Agent 拆解阶段 7
+
+- 状态：complete
+- 目标：让架构/任务拆解 Agent 基于阶段 7“波次系统”拆出最小任务。
+- 验证：输出包含当前目标、范围边界、任务拆解、风险与约束、推荐下一步。
+- 执行记录：
+  - 已派发架构/任务拆解 Agent `Huygens`，只读检查 docs、goal 记录、schema、runtime、tests 与 sample。
+  - 阶段 7 被收敛为单个最小任务：将 `units[]` 迁移为怪物模板，并实现 flat `waves[]` 的绝对时间刷怪。
+  - JSON 最小变化：`units[]` 保留 `id`、`kind`、`speed`、`maxHp`、`leakDamage`，移除 `pathId`；`waves[]` 新增 flat wave，字段为 `id`、`startTimeMs`、`unitId`、`pathId`、`count`、`intervalMs`。
+  - Runtime 最小行为：初始化时 materialize `startTimeMs === 0` 的 spawn；`tick(deltaMs)` 将下一次 spawn 时间纳入事件子步进；每次 spawn 用 `unitId` 模板和 `pathId` 生成 deterministic monster id，建议格式为 `waveId:spawnIndex`。
+  - Runtime 最小状态：`getState()` 新增 `waves[]` 进度，至少包含 `id`、`spawnedCount`、`totalCount`、`completed`。
+  - 本次明确不做：完整 gameStatus/victory、手动开波、清怪后自动下一波、奖励/金币、随机刷怪、嵌套 spawns、trigger DSL、Editor 波次 UI、Server 协议、保存/加载、AI Agent、Lua、ECS、MMO。
+  - 风险约束：`units[]` 不能继续同时表示实例和模板；`pathId` 应属于 wave spawn；`startTimeMs` 必须是绝对 elapsed time；spawn 事件必须进入 runtime 子步进模型，避免再次破坏 tick 分割等价性。
+  - 推荐下一步：交给全栈开发 Agent 实现“1 个模板 + 1 条 `startTimeMs: 0` wave”复刻当前 sample，并补 spawn 边界 deterministic 测试。
+  - 已关闭架构/任务拆解 Agent。
+  - 自检：对任务 14 当前拆解有 100% 信心；范围符合阶段 7，不越界到阶段 8。
+
+### 任务 15：全栈开发 Agent 实现阶段 7 最小切片
+
+- 状态：complete
+- 目标：实现 `units[]` 模板化和 flat `waves[]` 绝对时间刷怪。
+- 验证：schema/runtime 测试通过，项目 typecheck/test/build 通过。
+- 执行记录：
+  - 已派发全栈开发 Agent `Averroes`；该 Agent 长时间未产出可整合 diff，主会话接管阶段 7 实现并完成闭环。
+  - 已按 TDD 先修改 schema 测试，确认当前 schema 不支持模板化 `units[]` 和 flat `waves[]`。
+  - 已更新 `packages/schema/src/types.ts`：`units[]` 中 monster 模板移除 `pathId`；新增 `WaveDefinition`，字段为 `id`、`startTimeMs`、`unitId`、`pathId`、`count`、`intervalMs`。
+  - 已更新 schema 校验：`units[]` 只校验模板字段和 id 唯一；`waves[]` 校验 wave id 唯一、`startTimeMs >= 0`、`unitId` 引用已有 units id、`pathId` 引用已有 map path id、`count` 为正整数、`intervalMs` 为正数。
+  - 已更新 `apps/editor/src/game.sample.json`：用 `monster-basic` 模板 + `wave-1` 的 `startTimeMs: 0` 复刻原先开局 1 只怪。
+  - 已新增 `packages/runtime/src/waves.ts`，封装 unit template、wave state、spawn timing 和 deterministic monster id 生成。
+  - 已更新 runtime：初始化不再把 `units[]` 直接转为怪物；`waves[]` 生成 monster，runtime monster id 为 `${waveId}:${spawnIndex}`；`RuntimeSimulationState` 新增 `waves[]` 进度。
+  - 已将下一次 spawn 时间纳入 `simulation.ts` 的事件子步进，保持跨 spawn/attack/leak 边界的 tick 分割等价性。
+  - 已新增 `packages/runtime/src/waves.test.ts`，覆盖 `startTimeMs: 0` 初始化刷怪、延迟刷怪、wave progress 和 spawn/attack 边界等价 tick。
+  - 已迁移既有 runtime 测试到模板 + wave 语义，避免继续把 `units[]` 当实例。
+  - 已运行 `npm run test -w packages/schema`，通过：schema 22 tests。
+  - 已运行 `npm run test -w packages/runtime`，通过：runtime 30 tests。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 30 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 自检：阶段 7 初版实现符合 data-driven、serializable、runtime/editor 解耦，但进入审查后发现 runtime fail-fast 仍需补强。
+
+### 任务 16：测试/代码审查 Agent 审查阶段 7
+
+- 状态：complete
+- 目标：审查阶段 7 改动，确认 waves deterministic、可序列化且未越界到阶段 8。
+- 验证：输出 findings、test gaps、architecture check、recommendation。
+- 执行记录：
+  - 已派发测试/代码审查 Agent `Bacon` 只读审查阶段 7 diff。
+  - Findings P1：runtime 未在 simulation 创建阶段对全部 wave 合同做 fail-fast 校验；`startTimeMs > 0` 的未知 `unitId/pathId` 会延迟到 spawn 时才抛错，重复 wave id 会生成重复 monster id。
+  - Test Gaps：缺少 runtime 级 fail-fast 测试；缺少 leak、spawn、tower ready/attack 同时发生时的显式定序测试。
+  - Architecture Check：Runtime/Editor 解耦、纯 JSON、AI 易生成、`units[]` 模板语义、wave state 可序列化、多同步适配性和范围控制均通过。
+  - Recommendation：先修 P1 再合并。
+  - 已关闭测试/代码审查 Agent。
+
+### 任务 17：根据阶段 7 审查结果修复并最终验证
+
+- 状态：complete
+- 目标：补齐 runtime wave fail-fast 校验并运行最终验证。
+- 验证：`npm run typecheck`、`npm run test`、`npm run build` 通过。
+- 执行记录：
+  - 已按 TDD 在 `packages/runtime/src/waves.test.ts` 中新增失败测试，覆盖延迟 wave 引用未知 `unitId`、未知 `pathId` 和重复 `wave.id`。
+  - 已确认新增测试先失败，复现 runtime 延迟报错/重复 id 未校验问题。
+  - 已在 `packages/runtime/src/waves.ts` 的 `createWaveStates` 中增加 eager runtime 校验：重复 wave id、未知 unit template、未知 path 均在 simulation 创建阶段立即抛错。
+  - 已运行 `npm run test -w packages/runtime -- waves`，先失败后修复通过。
+  - 已运行文件长度检查：`wc -l packages/schema/src/*.ts packages/runtime/src/*.ts apps/editor/src/App.tsx apps/editor/src/main.tsx`，所有检查文件均低于 300 行。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 31 tests。
+  - 已运行 `npm run build`，通过；Vite 输出 chunk size warning，不影响构建结果。
+  - 自检：对阶段 7 当前实现有 100% 信心；审查 P1 已修复，spawn 进度可序列化，未实现阶段 8 gameStatus。
+
+### Debug 检查 D：任务 14 到任务 17 后全面检查
+
+- 状态：complete
+- 检查项：wave schema 语义、units 模板化、spawn deterministic、wave state 可序列化、runtime/editor 解耦、MVP 边界、文件尺寸。
+- 执行记录：
+  - wave schema 语义：flat `waves[]` 使用绝对 `startTimeMs`、`unitId`、`pathId`、`count`、`intervalMs`，schema 校验引用和数值边界。
+  - units 模板化：`units[]` 不再包含 `pathId`，只作为 monster template；runtime 不再把 `units[]` 直接生成实例。
+  - spawn deterministic：monster id 使用 `${waveId}:${spawnIndex}`；spawn 时间进入 simulation 子步进，跨 spawn/attack 边界的 tick 分割测试通过。
+  - wave state 可序列化：`getState().waves[]` 只包含 `id`、`spawnedCount`、`totalCount`、`completed`，适合 UI/网络同步消费。
+  - runtime/editor 解耦：波次逻辑位于 `packages/runtime`；`apps/editor` 只更新 sample JSON，没有写 gameplay 逻辑。
+  - MVP 边界：阶段 7 未实现完整 gameStatus/victory、手动开波、清怪后自动下一波、奖励/金币、随机刷怪、嵌套 spawns、trigger DSL、Editor 波次 UI、Server、保存/加载、AI Agent、Lua、ECS、MMO。
+  - 文件尺寸：所有检查文件均低于 300 行。
+  - 验证证据：`npm run typecheck`、`npm run test`、`npm run build` 均通过；Vite chunk size warning 为非阻塞体积提示。

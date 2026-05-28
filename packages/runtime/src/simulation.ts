@@ -6,7 +6,19 @@ import {
   moveActiveMonsters,
   type RuntimePathData
 } from "./movement";
-import { attackWithReadyTowers, createTowerDefinitions, updateTowerAttacks } from "./tower-attack";
+import {
+  advanceTowerCooldowns,
+  attackWithReadyTowers,
+  createTowerDefinitions
+} from "./tower-attack";
+import {
+  createUnitTemplates,
+  createWaveStates,
+  getNextWaveSpawnTimeMs,
+  spawnDueMonsters,
+  type InternalWaveState,
+  type RuntimeUnitTemplate
+} from "./waves";
 
 const TIME_EPSILON_MS = 0.000001;
 
@@ -15,6 +27,7 @@ export interface RuntimeSimulationState {
   base: RuntimeBaseState;
   monsters: RuntimeMonsterState[];
   towers: RuntimeTowerState[];
+  waves: RuntimeWaveState[];
 }
 
 export interface RuntimeBaseState {
@@ -38,6 +51,13 @@ export interface RuntimeTowerState {
   id: string;
   slotId: string;
   cooldownRemainingMs: number;
+}
+
+export interface RuntimeWaveState {
+  id: string;
+  spawnedCount: number;
+  totalCount: number;
+  completed: boolean;
 }
 
 export interface TowerDefenseSimulation {
@@ -70,12 +90,16 @@ interface InternalSimulationState {
   base: RuntimeBaseState;
   monsters: InternalMonsterState[];
   towers: InternalTowerState[];
+  waves: InternalWaveState[];
+  unitTemplates: Map<string, RuntimeUnitTemplate>;
+  pathDataById: Map<string, RuntimePathData>;
 }
 
 export function createTowerDefenseSimulation(game: GameDefinition): TowerDefenseSimulation {
   const pathDataById = createPathDataById(game);
   const towerDefinitions = createTowerDefinitions(game.towers, game.map.towerSlots);
   const state = createInitialSimulationState(game, pathDataById, towerDefinitions);
+  spawnDueMonsters(state, state.elapsedMs);
 
   return {
     tick(deltaMs) {
@@ -83,7 +107,7 @@ export function createTowerDefenseSimulation(game: GameDefinition): TowerDefense
         throw new Error("deltaMs must be a non-negative finite number");
       }
 
-      advanceSimulation(state, pathDataById, deltaMs);
+      advanceSimulation(state, deltaMs);
     },
     getState() {
       return cloneSimulationState(state);
@@ -93,7 +117,6 @@ export function createTowerDefenseSimulation(game: GameDefinition): TowerDefense
 
 function advanceSimulation(
   state: InternalSimulationState,
-  pathDataById: Map<string, RuntimePathData>,
   deltaMs: number
 ): void {
   let remainingMs = deltaMs;
@@ -101,15 +124,16 @@ function advanceSimulation(
   attackWithReadyTowers(state.towers, state.monsters);
 
   while (remainingMs > 0) {
-    const stepMs = getNextStepMs(state, pathDataById, remainingMs);
+    const stepMs = getNextStepMs(state, remainingMs);
 
     if (stepMs > 0) {
       state.elapsedMs += stepMs;
-      moveActiveMonsters(state.base, state.monsters, pathDataById, stepMs);
-      updateTowerAttacks(state.towers, state.monsters, stepMs);
+      moveActiveMonsters(state.base, state.monsters, state.pathDataById, stepMs);
+      advanceTowerCooldowns(state.towers, stepMs);
       remainingMs -= stepMs;
     }
 
+    spawnDueMonsters(state, state.elapsedMs);
     attackWithReadyTowers(state.towers, state.monsters);
 
     if (stepMs <= TIME_EPSILON_MS) {
@@ -120,14 +144,14 @@ function advanceSimulation(
 
 function getNextStepMs(
   state: InternalSimulationState,
-  pathDataById: Map<string, RuntimePathData>,
   remainingMs: number
 ): number {
   return Math.min(
     remainingMs,
     getNextTowerCooldownMs(state.towers),
-    getNextEscapeTimeMs(state.monsters, pathDataById),
-    getNextReadyTowerRangeTimeMs(state.towers, state.monsters, pathDataById)
+    getNextEscapeTimeMs(state.monsters, state.pathDataById),
+    getNextReadyTowerRangeTimeMs(state.towers, state.monsters, state.pathDataById),
+    getNextWaveSpawnTimeMs(state, state.elapsedMs)
   );
 }
 
@@ -146,7 +170,7 @@ function createInitialSimulationState(
   pathDataById: Map<string, RuntimePathData>,
   towers: RuntimeTowerDefinition[]
 ): InternalSimulationState {
-  const unitIds = new Set<string>();
+  const unitTemplates = createUnitTemplates(game);
 
   return {
     elapsedMs: 0,
@@ -154,35 +178,7 @@ function createInitialSimulationState(
       hp: game.base.maxHp,
       maxHp: game.base.maxHp
     },
-    monsters: game.units.map((unit) => {
-      if (unitIds.has(unit.id)) {
-        throw new Error(`duplicate unit id: ${unit.id}`);
-      }
-
-      unitIds.add(unit.id);
-
-      const pathData = pathDataById.get(unit.pathId);
-
-      if (!pathData) {
-        throw new Error(`monster path not found: ${unit.pathId}`);
-      }
-
-      const startPoint = pathData.points[0];
-
-      return {
-        id: unit.id,
-        pathId: unit.pathId,
-        hp: unit.maxHp,
-        leakDamage: unit.leakDamage,
-        speed: unit.speed,
-        position: {
-          x: startPoint.x,
-          y: startPoint.y
-        },
-        pathProgress: 0,
-        status: "active"
-      };
-    }),
+    monsters: [],
     towers: towers.map((tower) => ({
       id: tower.id,
       slotId: tower.slotId,
@@ -194,7 +190,10 @@ function createInitialSimulationState(
         x: tower.position.x,
         y: tower.position.y
       }
-    }))
+    })),
+    waves: createWaveStates(game, unitTemplates, pathDataById),
+    unitTemplates,
+    pathDataById
   };
 }
 
@@ -221,6 +220,12 @@ function cloneSimulationState(state: InternalSimulationState): RuntimeSimulation
       id: tower.id,
       slotId: tower.slotId,
       cooldownRemainingMs: tower.cooldownRemainingMs
+    })),
+    waves: state.waves.map((wave) => ({
+      id: wave.id,
+      spawnedCount: wave.spawnedCount,
+      totalCount: wave.totalCount,
+      completed: wave.completed
     }))
   };
 }

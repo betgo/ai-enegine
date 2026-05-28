@@ -6,15 +6,14 @@ import {
 
 export function validateUnits(
   value: unknown,
-  pathIds: Set<string>,
   errors: ValidationErrors
-): void {
+): Set<string> {
+  const seenUnitIds = new Set<string>();
+
   if (!Array.isArray(value)) {
     errors.push("units must be an array");
-    return;
+    return seenUnitIds;
   }
-
-  const seenUnitIds = new Set<string>();
 
   value.forEach((unit, index) => {
     const path = `units[${index}]`;
@@ -36,16 +35,12 @@ export function validateUnits(
       errors.push(`${path}.kind must be "monster"`);
     }
 
-    if (typeof unit.pathId !== "string" || unit.pathId.length === 0) {
-      errors.push(`${path}.pathId must be a non-empty string`);
-    } else if (!pathIds.has(unit.pathId)) {
-      errors.push(`${path}.pathId must reference an existing map.paths id`);
-    }
-
     validatePositiveNumber(unit.speed, `${path}.speed`, errors);
     validatePositiveNumber(unit.maxHp, `${path}.maxHp`, errors);
     validatePositiveNumber(unit.leakDamage, `${path}.leakDamage`, errors);
   });
+
+  return seenUnitIds;
 }
 
 export function validateTowers(
@@ -104,5 +99,84 @@ function validateTowerSlotReference(
     errors.push(`${path}.slotId must be unique`);
   } else {
     occupiedSlotIds.add(slotId);
+  }
+}
+
+export function validateWaves(
+  value: unknown,
+  unitIds: Set<string>,
+  pathIds: Set<string>,
+  errors: ValidationErrors
+): void {
+  if (!Array.isArray(value)) {
+    errors.push("waves must be an array");
+    return;
+  }
+
+  const seenWaveIds = new Set<string>();
+
+  value.forEach((wave, index) => {
+    const path = `waves[${index}]`;
+
+    if (!isRecord(wave)) {
+      errors.push(`${path} must be an object`);
+      return;
+    }
+
+    validateWaveId(wave.id, path, seenWaveIds, errors);
+    validateNonNegativeNumber(wave.startTimeMs, `${path}.startTimeMs`, errors);
+    validateWaveReference(wave.unitId, `${path}.unitId`, unitIds, "units", errors);
+    validateWaveReference(wave.pathId, `${path}.pathId`, pathIds, "map.paths", errors);
+    validatePositiveInteger(wave.count, `${path}.count`, errors);
+    validatePositiveNumber(wave.intervalMs, `${path}.intervalMs`, errors);
+  });
+}
+
+function validateWaveId(
+  id: unknown,
+  path: string,
+  seenWaveIds: Set<string>,
+  errors: ValidationErrors
+): void {
+  if (typeof id !== "string" || id.length === 0) {
+    errors.push(`${path}.id must be a non-empty string`);
+  } else if (seenWaveIds.has(id)) {
+    errors.push(`${path}.id must be unique`);
+  } else {
+    seenWaveIds.add(id);
+  }
+}
+
+function validateWaveReference(
+  id: unknown,
+  path: string,
+  knownIds: Set<string>,
+  collectionName: "units" | "map.paths",
+  errors: ValidationErrors
+): void {
+  if (typeof id !== "string" || id.length === 0) {
+    errors.push(`${path} must be a non-empty string`);
+  } else if (!knownIds.has(id)) {
+    errors.push(`${path} must reference an existing ${collectionName} id`);
+  }
+}
+
+function validateNonNegativeNumber(
+  value: unknown,
+  path: string,
+  errors: ValidationErrors
+): void {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    errors.push(`${path} must be a non-negative number`);
+  }
+}
+
+function validatePositiveInteger(
+  value: unknown,
+  path: string,
+  errors: ValidationErrors
+): void {
+  if (typeof value !== "number" || !Number.isInteger(value) || value <= 0) {
+    errors.push(`${path} must be a positive integer`);
   }
 }

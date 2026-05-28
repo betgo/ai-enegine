@@ -1,4 +1,4 @@
-import { validateTowers, validateUnits } from "./entity-validation";
+import { validateTowers, validateUnits, validateWaves } from "./entity-validation";
 import {
   collectPathIds,
   collectTowerSlotIds,
@@ -59,9 +59,9 @@ export function validateGameDefinition(value: unknown): ValidationResult {
     collectTowerSlotIds(value.map.towerSlots, towerSlotIds);
   }
 
-  validateUnits(value.units, pathIds, errors);
+  const unitIds = validateUnits(value.units, errors);
   validateTowers(value.towers, towerSlotIds, errors);
-  validateArrayField(value, "waves", errors);
+  validateWaves(value.waves, unitIds, pathIds, errors);
   validateArrayField(value, "triggers", errors);
 
   return {

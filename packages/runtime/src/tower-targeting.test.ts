@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createTowerDefenseRuntime } from "./index";
-import { createRendererDouble, game } from "./test-helpers";
+import { createRendererDouble, game, withUnitsAsWave } from "./test-helpers";
 
 describe("createTowerDefenseRuntime tower targeting", () => {
   it("uses deterministic targeting by pathProgress then id", () => {
@@ -8,8 +8,8 @@ describe("createTowerDefenseRuntime tower targeting", () => {
 
     runtime.tick(500);
     const state = runtime.getState();
-    const monsterA = state.monsters.find((monster) => monster.id === "monster-a");
-    const monsterB = state.monsters.find((monster) => monster.id === "monster-b");
+    const monsterA = state.monsters.find((monster) => monster.id === "wave-a:0");
+    const monsterB = state.monsters.find((monster) => monster.id === "wave-b:0");
 
     expect(monsterA?.hp).toBe(7);
     expect(monsterB?.hp).toBe(10);
@@ -22,8 +22,8 @@ describe("createTowerDefenseRuntime tower targeting", () => {
     firstRuntime.tick(500);
     secondRuntime.tick(500);
 
-    const firstTarget = firstRuntime.getState().monsters.find((monster) => monster.id === "monster-a");
-    const secondTarget = secondRuntime.getState().monsters.find((monster) => monster.id === "monster-a");
+    const firstTarget = firstRuntime.getState().monsters.find((monster) => monster.id === "wave-a:0");
+    const secondTarget = secondRuntime.getState().monsters.find((monster) => monster.id === "wave-a:0");
 
     expect(firstTarget?.hp).toBe(7);
     expect(secondTarget?.hp).toBe(7);
@@ -32,12 +32,10 @@ describe("createTowerDefenseRuntime tower targeting", () => {
   it("does not target monsters with zero hp", () => {
     const runtime = createTowerDefenseRuntime({
       game: {
-        ...game,
-        units: [
+        ...withUnitsAsWave([
           {
             id: "monster-a",
             kind: "monster",
-            pathId: "main",
             speed: 1,
             maxHp: 1,
             leakDamage: 1
@@ -45,12 +43,11 @@ describe("createTowerDefenseRuntime tower targeting", () => {
           {
             id: "monster-b",
             kind: "monster",
-            pathId: "main",
             speed: 1,
             maxHp: 10,
             leakDamage: 1
           }
-        ],
+        ]),
         towers: [
           {
             id: "tower-1",
@@ -66,8 +63,8 @@ describe("createTowerDefenseRuntime tower targeting", () => {
 
     runtime.tick(500);
     const state = runtime.getState();
-    const monsterA = state.monsters.find((monster) => monster.id === "monster-a");
-    const monsterB = state.monsters.find((monster) => monster.id === "monster-b");
+    const monsterA = state.monsters.find((monster) => monster.id === "wave-1:0");
+    const monsterB = state.monsters.find((monster) => monster.id === "wave-2:0");
 
     expect(monsterA?.hp).toBe(0);
     expect(monsterA?.status).toBe("dead");
@@ -76,16 +73,24 @@ describe("createTowerDefenseRuntime tower targeting", () => {
 });
 
 function createRuntimeWithUnits(unitIds: string[]) {
+  const units = unitIds.map((id) => ({
+    id,
+    kind: "monster" as const,
+    speed: 1,
+    maxHp: 10,
+    leakDamage: 1
+  }));
+
   return createTowerDefenseRuntime({
     game: {
-      ...game,
-      units: unitIds.map((id) => ({
-        id,
-        kind: "monster",
+      ...withUnitsAsWave(units),
+      waves: units.map((unit) => ({
+        id: unit.id === "monster-a" ? "wave-a" : "wave-b",
+        startTimeMs: 0,
+        unitId: unit.id,
         pathId: "main",
-        speed: 1,
-        maxHp: 10,
-        leakDamage: 1
+        count: 1,
+        intervalMs: 1000
       })),
       towers: [
         {

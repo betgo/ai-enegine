@@ -37,16 +37,24 @@ export const game: GameDefinition = {
   },
   units: [
     {
-      id: "monster-1",
+      id: "monster-basic",
       kind: "monster",
-      pathId: "main",
       speed: 2,
       maxHp: 10,
       leakDamage: 3
     }
   ],
   towers: [],
-  waves: [],
+  waves: [
+    {
+      id: "wave-1",
+      startTimeMs: 0,
+      unitId: "monster-basic",
+      pathId: "main",
+      count: 1,
+      intervalMs: 1000
+    }
+  ],
   triggers: []
 };
 
@@ -64,5 +72,23 @@ export function withTowers(towers: GameDefinition["towers"]): GameDefinition {
   return {
     ...game,
     towers
+  };
+}
+
+export function withUnitsAsWave(
+  units: GameDefinition["units"],
+  pathId = "main"
+): GameDefinition {
+  return {
+    ...game,
+    units,
+    waves: units.map((unit, index) => ({
+      id: `wave-${index + 1}`,
+      startTimeMs: 0,
+      unitId: unit.id,
+      pathId,
+      count: 1,
+      intervalMs: 1000
+    }))
   };
 }

@@ -55,11 +55,15 @@ export function updateTowerAttacks(
   monsters: InternalMonsterState[],
   deltaMs: number
 ): void {
+  advanceTowerCooldowns(towers, deltaMs);
+
+  attackWithReadyTowers(towers, monsters);
+}
+
+export function advanceTowerCooldowns(towers: InternalTowerState[], deltaMs: number): void {
   towers.forEach((tower) => {
     tower.cooldownRemainingMs -= deltaMs;
   });
-
-  attackWithReadyTowers(towers, monsters);
 }
 
 export function attackWithReadyTowers(

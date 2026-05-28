@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { GameDefinition } from "@ai-enegine/schema";
 import { createTowerDefenseRuntime } from "./index";
-import { createRendererDouble, game } from "./test-helpers";
+import { createRendererDouble, game, withUnitsAsWave } from "./test-helpers";
 
 describe("createTowerDefenseRuntime health system", () => {
   it("escapes at path end and only applies leak damage once", () => {
@@ -31,12 +31,10 @@ describe("createTowerDefenseRuntime health system", () => {
   it("keeps escaped monsters out of tower targeting", () => {
     const runtime = createTowerDefenseRuntime({
       game: {
-        ...game,
-        units: [
+        ...withUnitsAsWave([
           {
             id: "monster-escape",
             kind: "monster",
-            pathId: "main",
             speed: 100,
             maxHp: 10,
             leakDamage: 1
@@ -44,12 +42,11 @@ describe("createTowerDefenseRuntime health system", () => {
           {
             id: "monster-active",
             kind: "monster",
-            pathId: "main",
             speed: 1,
             maxHp: 10,
             leakDamage: 1
           }
-        ],
+        ]),
         towers: [
           {
             id: "tower-1",
@@ -65,8 +62,8 @@ describe("createTowerDefenseRuntime health system", () => {
 
     runtime.tick(100);
     const state = runtime.getState();
-    const escapedMonster = state.monsters.find((monster) => monster.id === "monster-escape");
-    const activeMonster = state.monsters.find((monster) => monster.id === "monster-active");
+    const escapedMonster = state.monsters.find((monster) => monster.id === "wave-1:0");
+    const activeMonster = state.monsters.find((monster) => monster.id === "wave-2:0");
 
     expect(escapedMonster?.status).toBe("escaped");
     expect(escapedMonster?.hp).toBe(10);
@@ -76,15 +73,10 @@ describe("createTowerDefenseRuntime health system", () => {
   it("clamps base hp to zero when escaped monsters overflow damage", () => {
     const runtime = createTowerDefenseRuntime({
       game: {
-        ...game,
-        base: {
-          maxHp: 5
-        },
-        units: [
+        ...withUnitsAsWave([
           {
             id: "monster-1",
             kind: "monster",
-            pathId: "main",
             speed: 2,
             maxHp: 10,
             leakDamage: 4
@@ -92,12 +84,14 @@ describe("createTowerDefenseRuntime health system", () => {
           {
             id: "monster-2",
             kind: "monster",
-            pathId: "main",
             speed: 2,
             maxHp: 10,
             leakDamage: 4
           }
-        ]
+        ]),
+        base: {
+          maxHp: 5
+        }
       },
       rendererFactory: () => createRendererDouble()
     });
@@ -110,12 +104,10 @@ describe("createTowerDefenseRuntime health system", () => {
   it("dead monsters no longer move, leak or get retargeted", () => {
     const runtime = createTowerDefenseRuntime({
       game: {
-        ...game,
-        units: [
+        ...withUnitsAsWave([
           {
             id: "monster-a",
             kind: "monster",
-            pathId: "main",
             speed: 2,
             maxHp: 10,
             leakDamage: 4
@@ -123,12 +115,11 @@ describe("createTowerDefenseRuntime health system", () => {
           {
             id: "monster-b",
             kind: "monster",
-            pathId: "main",
             speed: 2,
             maxHp: 10,
             leakDamage: 4
           }
-        ],
+        ]),
         towers: [
           {
             id: "tower-1",
@@ -144,8 +135,8 @@ describe("createTowerDefenseRuntime health system", () => {
 
     runtime.tick(250);
     const afterFirstHit = runtime.getState();
-    const deadMonster = afterFirstHit.monsters.find((monster) => monster.id === "monster-a");
-    const aliveMonster = afterFirstHit.monsters.find((monster) => monster.id === "monster-b");
+    const deadMonster = afterFirstHit.monsters.find((monster) => monster.id === "wave-1:0");
+    const aliveMonster = afterFirstHit.monsters.find((monster) => monster.id === "wave-2:0");
 
     expect(deadMonster?.status).toBe("dead");
     expect(aliveMonster?.status).toBe("active");
@@ -153,8 +144,8 @@ describe("createTowerDefenseRuntime health system", () => {
 
     runtime.tick(250);
     const afterSecondHit = runtime.getState();
-    const sameDeadMonster = afterSecondHit.monsters.find((monster) => monster.id === "monster-a");
-    const secondDeadMonster = afterSecondHit.monsters.find((monster) => monster.id === "monster-b");
+    const sameDeadMonster = afterSecondHit.monsters.find((monster) => monster.id === "wave-1:0");
+    const secondDeadMonster = afterSecondHit.monsters.find((monster) => monster.id === "wave-2:0");
 
     expect(sameDeadMonster?.status).toBe("dead");
     expect(sameDeadMonster?.pathProgress).toBe(deadMonster?.pathProgress);
@@ -191,10 +182,19 @@ describe("createTowerDefenseRuntime health system", () => {
         {
           id: "monster-1",
           kind: "monster",
-          pathId: "main",
           speed: 1,
           maxHp: 1,
           leakDamage: 3
+        }
+      ],
+      waves: [
+        {
+          id: "wave-1",
+          startTimeMs: 0,
+          unitId: "monster-1",
+          pathId: "main",
+          count: 1,
+          intervalMs: 1000
         }
       ],
       towers: [

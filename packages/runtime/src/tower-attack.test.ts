@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { validateGameDefinition } from "@ai-enegine/schema";
 import sampleGame from "../../../apps/editor/src/game.sample.json";
 import { createTowerDefenseRuntime } from "./index";
-import { createRendererDouble, game, withTowers } from "./test-helpers";
+import { createRendererDouble, game, withTowers, withUnitsAsWave } from "./test-helpers";
 
 describe("createTowerDefenseRuntime tower attacks", () => {
   it("initializes tower simulation state", () => {
@@ -71,7 +71,15 @@ describe("createTowerDefenseRuntime tower attacks", () => {
   it("keeps cooldown timing while no target is in range", () => {
     const delayedTargetRuntime = createTowerDefenseRuntime({
       game: {
-        ...game,
+        ...withUnitsAsWave([
+          {
+            id: "monster-basic",
+            kind: "monster",
+            speed: 1,
+            maxHp: 10,
+            leakDamage: 1
+          }
+        ]),
         map: {
           ...game.map,
           paths: [
@@ -91,16 +99,6 @@ describe("createTowerDefenseRuntime tower attacks", () => {
             }
           ]
         },
-        units: [
-          {
-            id: "monster-1",
-            kind: "monster",
-            pathId: "main",
-            speed: 1,
-            maxHp: 10,
-            leakDamage: 1
-          }
-        ],
         towers: [
           {
             id: "tower-1",
