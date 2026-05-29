@@ -9,7 +9,7 @@
 当前状态：
 
 - 第一阶段 `3D Tower Defense Runtime` 已完成到本地 MVP 闭环。
-- 下一阶段优先做 `Playable Runtime MVP`，让用户可以在浏览器里运行游戏。
+- 第二阶段 `Playable Runtime MVP` 已完成最小运行入口，用户可以通过 `apps/player` 在浏览器里运行游戏。
 
 ## 2. 第一阶段完成状态
 
@@ -51,9 +51,19 @@
 - ECS 框架、大型通用游戏引擎。
 - MMO、大世界、跨地图持久状态。
 
-## 4. 第二阶段路线图：Playable Runtime MVP
+## 4. 第二阶段完成状态：Playable Runtime MVP
 
 目标：新增 `apps/player`，把现有 runtime simulation 变成浏览器里可运行、可观察、可重置的最小游戏入口。
+
+已完成能力：
+
+- `apps/player` 可以通过 Vite 启动。
+- Player 加载 sample `GameDefinition` 并挂载 Runtime。
+- Runtime 根据 simulation state 渲染 active monster，并在 `render()` 前同步位置。
+- Player 支持 Play / Pause / Step / Reset。
+- Player HUD 展示 `status`、elapsed、`base.hp`、wave progress 和 active monster count。
+- Player 支持导入本地 `game.json`，无效导入不替换当前 game。
+- 根级 `typecheck`、`test`、`build` 已覆盖 `apps/player`。
 
 第二阶段原则：
 
@@ -67,6 +77,8 @@
 
 ### 阶段 11：新增 `apps/player`
 
+状态：已完成。
+
 目标：创建独立 Player app，加载当前示例 `GameDefinition` 并挂载 Runtime。
 
 验收标准：
@@ -78,6 +90,8 @@
 
 ### 阶段 12：Runtime 渲染动态怪物状态
 
+状态：已完成。
+
 目标：Runtime 根据 simulation state 渲染怪物位置和生命周期状态。
 
 验收标准：
@@ -88,6 +102,8 @@
 - runtime 测试覆盖 state 到渲染对象的关键映射或可观测摘要。
 
 ### 阶段 13：Player 控制 Play / Pause / Step / Reset
+
+状态：已完成。
 
 目标：Player 提供最小运行控制。
 
@@ -101,6 +117,8 @@
 
 ### 阶段 14：Player HUD
 
+状态：已完成。
+
 目标：展示当前游戏状态，让用户能理解运行结果。
 
 验收标准：
@@ -110,6 +128,8 @@
 - HUD 不推导胜负、伤害或波次逻辑。
 
 ### 阶段 15：Player 导入本地 `game.json`
+
+状态：已完成。
 
 目标：Player 可以运行用户从 Editor 导出的地图。
 
@@ -121,6 +141,8 @@
 - 不引入账号、云存储、发布系统或 localStorage。
 
 ### 阶段 16：Player smoke test 与文档同步
+
+状态：已完成。
 
 目标：验证 Player 最小闭环并更新运行说明。
 

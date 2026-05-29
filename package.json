@@ -8,9 +8,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w packages/schema && npm run build -w packages/runtime && npm run build -w apps/editor",
-    "typecheck": "npm run typecheck -w packages/schema && npm run typecheck -w packages/runtime && npm run typecheck -w apps/editor",
-    "test": "npm run test -w packages/schema && npm run test -w packages/runtime && npm run test -w apps/editor"
+    "build": "npm run build -w packages/schema && npm run build -w packages/runtime && npm run build -w apps/editor && npm run build -w apps/player",
+    "typecheck": "npm run typecheck -w packages/schema && npm run typecheck -w packages/runtime && npm run typecheck -w apps/editor && npm run typecheck -w apps/player",
+    "test": "npm run test -w packages/schema && npm run test -w packages/runtime && npm run test -w apps/editor && npm run test -w apps/player"
   },
   "engines": {
     "node": ">=20.0.0"

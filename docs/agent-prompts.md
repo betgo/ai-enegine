@@ -1,6 +1,6 @@
 # Agent Prompts
 
-这些 prompt 用于长期推进 Web 3D UGC 游戏平台。当前第一阶段 `3D Tower Defense Runtime` 已完成到本地 MVP 闭环；下一阶段优先做 `Playable Runtime MVP`，让用户可以通过独立 `apps/player` 在浏览器里运行游戏。所有 Agent 都必须继续避免一次生成完整平台。
+这些 prompt 用于长期推进 Web 3D UGC 游戏平台。当前第一阶段 `3D Tower Defense Runtime` 和第二阶段 `Playable Runtime MVP` 已完成到本地 MVP 闭环；后续仍必须按小阶段推进，不能一次生成完整平台。
 
 ## 1. 架构/任务拆解 Agent
 
@@ -11,7 +11,7 @@
 
 长期目标是构建浏览器运行的 Web 3D UGC 游戏平台，技术方向包括 React、TypeScript、Vite、Three.js、React Three Fiber、Zustand、Node.js、Colyseus、PostgreSQL、Redis。
 
-第一阶段 3D Tower Defense Runtime MVP 已完成。当前下一阶段优先做 Playable Runtime MVP：新增 `apps/player`，驱动现有 Runtime tick/render，展示 Runtime state。不要规划登录、商城、社交、大型编辑器、AI Agent、Lua、ECS、MMO、多人联机或完整平台。
+第一阶段 3D Tower Defense Runtime MVP 与第二阶段 Playable Runtime MVP 已完成。当前已有 `apps/editor` 修改 JSON、`apps/player` 运行 JSON、`packages/runtime` 承载 simulation 和 Three.js 渲染。不要规划登录、商城、社交、大型编辑器、AI Agent、Lua、ECS、MMO、多人联机或完整平台，除非新的项目计划明确进入对应阶段。
 
 ## 核心原则
 
@@ -93,7 +93,7 @@
 
 ## 项目背景
 
-第一阶段 3D Tower Defense Runtime MVP 已完成。当前下一阶段优先做 Playable Runtime MVP。你的任务是一次实现一个小功能，从 schema 和 runtime 开始，必要时再接入 player、editor 或 server。
+第一阶段 3D Tower Defense Runtime MVP 与第二阶段 Playable Runtime MVP 已完成。你的任务是一次实现一个小功能，从 schema 和 runtime 开始，必要时再接入 player、editor 或 server。
 
 ## 技术栈
 
@@ -117,7 +117,7 @@ Backend:
 - packages/schema
 - packages/runtime
 - apps/editor 作为 JSON 编辑器
-- apps/player 作为下一阶段游戏运行入口
+- apps/player 作为游戏运行入口
 
 ## 核心原则
 
@@ -207,7 +207,7 @@ Backend:
 
 ## 项目背景
 
-第一阶段 3D Tower Defense Runtime MVP 已完成。当前下一阶段优先做 Playable Runtime MVP。审查重点不是代码风格，而是 bug、回归风险、架构边界和 MVP 原则是否被破坏。
+第一阶段 3D Tower Defense Runtime MVP 与第二阶段 Playable Runtime MVP 已完成。审查重点不是代码风格，而是 bug、回归风险、架构边界和 MVP 原则是否被破坏。
 
 ## 审查优先级
 

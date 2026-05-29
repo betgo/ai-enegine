@@ -20,17 +20,18 @@ Web 3D UGC 游戏平台的第一阶段 MVP。当前已完成 **3D Tower Defense 
 - 完整多人联机。
 - 云存储、发布系统、自动保存、版本历史。
 
-下一阶段：
+Playable Runtime：
 
 - 新增 `apps/player` 作为浏览器游戏运行入口。
 - Player 将读取 `GameDefinition`，驱动 Runtime `tick(deltaMs)` / `render()`，并展示 `getState()`。
-- 当前仓库还没有 `apps/player`；现在运行的是 Editor 和 Runtime 预览，不是完整可玩入口。
+- `apps/player` 已提供最小 Playable Runtime 入口，支持 Play / Pause / Step / Reset、HUD 和本地 JSON 导入。
 
 ## 目录结构
 
 ```txt
 apps/
   editor/        # Vite React editor，只修改 JSON 并调用 runtime 预览
+  player/        # Vite React player，运行 JSON 并驱动 runtime
   server/        # 未来 Colyseus/server 入口，当前仅占位
 
 packages/
@@ -49,13 +50,11 @@ goal-2/          # 阶段 4-10 的三 Agent 执行记录
 npm install
 ```
 
-## 本地预览
+## 本地预览 Editor
 
 ```bash
 npm run dev -w apps/editor
 ```
-
-当前只有 Editor 启动入口。未来真正运行游戏的入口会是 `apps/player`。
 
 默认地址：
 
@@ -70,6 +69,25 @@ http://127.0.0.1:5173/
 - 可以编辑地图尺寸、路径点和塔位；schema 有效时 runtime preview 会重建。
 - 可以导出当前有效 `game.json`，也可以导入本地 JSON；无效导入会保留当前 draft/preview。
 - 画布中显示网格、路径、塔位标记和 blocked tile。
+
+## 本地运行 Player
+
+```bash
+npm run dev -w apps/player
+```
+
+默认地址：
+
+```txt
+http://127.0.0.1:5174/
+```
+
+预期结果：
+
+- 页面显示 Playable Runtime、Controls 和 HUD。
+- Play / Pause / Step / Reset 可以控制 runtime。
+- HUD 显示 `status`、elapsed、base hp、active monster count 和 wave progress。
+- 可以导入本地 `game.json`；无效导入不会替换当前 game。
 
 ## 验证命令
 
@@ -91,4 +109,4 @@ npm run build
 
 ## 当前状态
 
-`docs/project-plan.md` 第一阶段的阶段 1-10 已完成到本地 MVP 闭环。下一阶段已规划为 `Playable Runtime MVP`：新增 `apps/player`，先把现有 runtime simulation 变成可开始、暂停、步进、重置并可观察 HUD 的浏览器运行入口。
+`docs/project-plan.md` 第一阶段的阶段 1-10 已完成到本地 MVP 闭环。第二阶段 `Playable Runtime MVP` 已完成最小运行入口：`apps/player` 可以运行 sample game、控制 runtime、展示 HUD，并导入本地 `game.json`。
