@@ -16,6 +16,7 @@ import {
   Vector3,
   WebGLRenderer
 } from "three";
+import { createDynamicEntityRenderer } from "./dynamic-entities";
 import {
   createTowerDefenseSimulation,
   type RuntimeSimulationState
@@ -83,6 +84,7 @@ export function createTowerDefenseRuntime(
   buildMapScene(scene, options.game);
 
   const simulation = createTowerDefenseSimulation(options.game);
+  const dynamicEntities = createDynamicEntityRenderer(scene);
 
   return {
     scene,
@@ -107,9 +109,11 @@ export function createTowerDefenseRuntime(
       return simulation.getState();
     },
     render() {
+      dynamicEntities.sync(simulation.getState());
       renderer.render(scene, camera);
     },
     dispose() {
+      dynamicEntities.dispose();
       renderer.dispose();
       options.container?.removeChild(renderer.domElement);
       disposeObject(scene);
