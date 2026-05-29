@@ -147,24 +147,59 @@
 
 ### 任务 10：架构/任务拆解 Agent 拆解阶段 15-16
 
-- 状态：pending
+- 状态：complete
 - 目标：拆解 Player 导入本地 `game.json` 和最终文档同步。
 - 验证：输出当前目标、范围边界、风险、验收标准和推荐下一步。
+- 执行记录：
+  - 阶段 15-16 被收敛为 Player 导入 JSON、README/docs 状态同步和最终 smoke 验证。
+  - Player 导入边界：读取本地 JSON 文本，先 `JSON.parse`，再拒绝 unknown top-level fields，最后 `validateGameDefinition`；失败时只显示错误，不替换当前 game。
+  - 文档同步边界：README 记录 Editor 与 Player 两个启动入口；`docs/project-plan.md` 标记阶段 11-16 完成；`docs/agent-prompts.md` 同步到第二阶段已完成的上下文。
+  - 本次不做：localStorage、云存储、发布、账号、最近文件、自动保存、多人联机、AI Agent、Lua、ECS、大型编辑器。
+  - 推荐下一步：由全栈开发 Agent 补齐 Player 导入 helper、文档和完整验证。
+  - 自检：对任务 10 当前拆解有 100% 信心；阶段 15-16 范围明确。
 
 ### 任务 11：全栈开发 Agent 实现 Player 导入 JSON 和文档同步
 
-- 状态：pending
+- 状态：complete
 - 目标：Player 支持导入 schema-valid `game.json`，失败不替换当前 game，并同步 README/docs。
 - 验证：player 定向测试、typecheck/test/build、浏览器 smoke。
+- 执行记录：
+  - 已在 `apps/player/src/player-state.ts` 实现 `parsePlayerGameJson`，支持有效 JSON、语法错误、schema 错误和 unknown top-level fields。
+  - 已在 `apps/player/src/App.tsx` 接入 Import JSON 按钮和隐藏 file input；导入成功替换 `game` 并重建 runtime，导入失败只展示错误。
+  - 已同步 `README.md`，记录 `apps/player` 启动方式、预期结果、HUD 和导入边界。
+  - 已同步 `docs/project-plan.md`，将阶段 11-16 标记为已完成，并记录 Player MVP 已完成能力。
+  - 已同步 `docs/agent-prompts.md`，将 Agent 上下文更新为第一阶段和第二阶段均已完成到本地 MVP 闭环。
+  - 已运行 `npm run test -w apps/player`，通过：5 tests。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 42 tests，editor 14 tests，player 5 tests。
+  - 已运行 `npm run build`，通过；Vite chunk size warning 不影响构建结果。
+  - 已完成浏览器 smoke：Player 页面打开，controls 和 HUD 可见，Step/Play/Pause/Reset 行为符合预期，console 无 error。
+  - 已检查并停止本轮 smoke test 启动的 `apps/player` dev server。
+  - 自检：对任务 11 当前实现有 100% 信心；导入只处理 `GameDefinition`，不保存 runtime state。
 
 ### 任务 12：测试/代码审查 Agent 最终审查 Playable Runtime MVP
 
-- 状态：pending
+- 状态：complete
 - 目标：审查阶段 11-16 是否满足 docs plan，确认无范围膨胀。
 - 验证：输出 findings、test gaps、architecture check、recommendation。
+- 执行记录：
+  - Findings：未发现阻塞性问题。
+  - Test Gaps：未新增 jsdom 组件测试；当前阶段以 helper 单测、runtime 单测、typecheck/build 和浏览器 smoke 覆盖关键行为，符合轻量 MVP 边界。
+  - Architecture Check：Runtime 动态实体渲染在 `packages/runtime`；Player 只调用 `tick/render/getState`；Editor/Player 分离；JSON 仍纯 definition；固定步进使用 `SIM_STEP_MS = 100`；未引入联机、发布、账号、云存储、AI Agent、Lua、ECS 或大型编辑器。
+  - Recommendation：可以进入最终提交和完成审计。
 
 ### 任务 13：最终修复、验证、提交和完成审计
 
-- 状态：pending
+- 状态：complete
 - 目标：修复最终审查 findings，运行完整验证，提交并审计 goal 是否完成。
 - 验证：工作区干净，`npm run typecheck/test/build` 通过，浏览器 smoke 通过，docs 与 README 已同步。
+- 执行记录：
+  - 最终审查未发现阻塞性 findings，无需额外修复。
+  - 已运行 `git diff --check`，通过。
+  - 已运行 `npm run typecheck`，通过。
+  - 已运行 `npm run test`，通过：schema 22 tests，runtime 42 tests，editor 14 tests，player 5 tests。
+  - 已运行 `npm run build`，通过；Editor 和 Player 的 Three.js chunk size warning 不影响构建结果。
+  - 已完成浏览器 smoke：Player 页面、Play/Pause/Step/Reset、HUD 和 console 均符合预期。
+  - 已提交 Runtime 动态怪物渲染：`e292e51 feat(runtime): 渲染动态怪物状态`。
+  - 已提交 Player 运行入口：`960ddad feat(player): 新增可运行游戏入口`。
+  - 自检：对 Goal 3 当前实现有 100% 信心；`docs/project-plan.md` 阶段 11-16 已完成并有验证证据。
