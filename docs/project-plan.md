@@ -10,6 +10,7 @@
 
 - 第一阶段 `3D Tower Defense Runtime` 已完成到本地 MVP 闭环。
 - 第二阶段 `Playable Runtime MVP` 已完成最小运行入口，用户可以通过 `apps/player` 在浏览器里运行游戏。
+- 第三阶段 `Editor Gameplay Configuration MVP` 已完成最小创作闭环，用户可以在 `apps/editor` 配置地图与玩法并导出可运行 JSON。
 
 ## 2. 第一阶段完成状态
 
@@ -152,7 +153,70 @@
 - 浏览器 smoke：打开 Player，Play/Pause/Step/Reset 可用，HUD 与 Runtime state 一致。
 - README 和 docs 同步记录 Player 的启动方式与边界。
 
-## 5. 第一阶段历史路线图
+## 5. 第三阶段完成状态：Editor Gameplay Configuration MVP
+
+目标：让 Editor 不只编辑地图，也能配置一张 Tower Defense 关卡的核心玩法数据，并导出可直接在 Player 运行的 `game.json`。
+
+已完成能力：
+
+- Editor 可以编辑 `base.maxHp`。
+- Editor 可以编辑现有 monster 的 `speed`、`maxHp` 和 `leakDamage`。
+- Editor 可以新增 monster，默认使用稳定生成 ID。
+- Editor 可以新增、删除和编辑 tower，包含 `slotId`、`range`、`attackIntervalMs` 和 `damage`。
+- Editor 新增 tower 时使用第一个未占用 tower slot；没有空闲 slot 时禁用新增。
+- Editor 的 tower slot 下拉只允许当前 slot 或未被其它 tower 占用的 slot。
+- Editor 可以新增、删除和编辑 wave，包含 `startTimeMs`、`unitId`、`pathId`、`count` 和 `intervalMs`。
+- Editor 新增 wave 时复用现有 monster/path，并使用 deterministic 默认值。
+- Editor 仍只修改 `GameDefinition` JSON，不保存 runtime state。
+- Runtime 和 Player gameplay 未改动。
+
+第三阶段原则：
+
+- 不修改 `game.json` schema。
+- 不做 monster 删除，避免处理 wave 引用删除。
+- 不做可视化选点、拖拽、路径新增/删除、复杂平衡工具或关卡发布。
+- 不做 server、多人、账号、发布、AI Agent、Lua、ECS 或大型编辑器。
+- Editor 可以短暂产生 invalid draft；只有 valid JSON 会进入 preview/export。
+
+### 阶段 17：Editor gameplay state helpers
+
+状态：已完成。
+
+目标：为 base、monster、tower 和 wave 配置补充纯函数状态修改 helper。
+
+验收标准：
+
+- helper 不 mutate 输入的 `GameDefinition`。
+- 新 ID 使用稳定规则并跳过已有 ID。
+- tower slot 占用规则保持 schema valid。
+- wave 默认值 deterministic，且引用现有 unit/path。
+- editor 单测覆盖核心 helper 行为。
+
+### 阶段 18：Editor gameplay configuration UI
+
+状态：已完成。
+
+目标：在 Editor 中提供最小玩法配置区。
+
+验收标准：
+
+- UI 可以修改 base、monster、tower 和 wave 字段。
+- tower 和 wave 引用通过下拉选择已有 ID。
+- App 主组件保持组合职责，地图配置和玩法配置拆入独立面板。
+- Editor 不实现 runtime gameplay 逻辑。
+
+### 阶段 19：Editor-to-Player smoke
+
+状态：已完成。
+
+目标：验证 Editor 导出的 JSON 可以被 Player 导入并运行。
+
+验收标准：
+
+- `npm run typecheck`、`npm run test`、`npm run build` 通过。
+- 浏览器 smoke：Editor 修改 base/tower/wave 后 JSON valid，导出 JSON，Player 导入后 Play/Pause/Step/Reset 可用，HUD 正常。
+
+## 6. 第一阶段历史路线图
 
 ### 阶段 1：`game.json` schema
 
@@ -276,7 +340,11 @@
 - 保存内容可被 schema 校验和 runtime 加载。
 - 不引入账号、云存储或发布系统。
 
-## 6. 风险清单
+## 7. 分支约定
+
+后续功能、修复和文档更新默认直接在 `main` 分支推进。只有在需要隔离高风险实验、长期并行任务或外部协作时，才额外创建短生命周期功能分支。
+
+## 8. 风险清单
 
 - 过早抽象：在只有一个玩法时抽象通用引擎，会拖慢 MVP 并制造错误边界。
 - Runtime 与 Editor 耦合：一旦玩法逻辑进入 UI，后续多人同步和服务端模拟会变困难。
@@ -286,7 +354,7 @@
 - 多人同步复杂度：必须先保证状态可序列化和逻辑 deterministic，再接入 Colyseus。
 - 视觉优先陷阱：漂亮编辑器不能替代可验证 runtime 行为。
 
-## 7. 推进原则
+## 9. 推进原则
 
 - 每次只完成一个小功能。
 - 每个功能都先定义数据，再实现 runtime 行为，最后接 UI。

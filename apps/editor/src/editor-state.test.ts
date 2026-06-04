@@ -89,4 +89,5 @@ describe("editor state helpers", () => {
     expect(nextGame.map.tiles).toContainEqual({ x: 1, y: 0, kind: "path" });
     expect(nextGame.map.tiles).toContainEqual({ x: 2, y: 0, kind: "path" });
   });
+
 });

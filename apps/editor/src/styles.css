@@ -39,7 +39,8 @@ button:disabled {
 }
 
 input,
-textarea {
+textarea,
+select {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 6px;
   color: #f4f7fb;
@@ -150,6 +151,10 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.field-grid.triple {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .field-row {
   grid-template-columns: minmax(56px, 0.8fr) repeat(2, minmax(78px, 1fr)) minmax(82px, auto);
   align-items: end;
@@ -166,18 +171,29 @@ textarea {
   display: none;
 }
 
-.number-field {
+.number-field,
+.select-field {
   display: grid;
   gap: 4px;
   color: #a9b7c8;
   font-size: 12px;
 }
 
-.number-field input {
+.number-field input,
+.select-field select {
   width: 100%;
   min-width: 0;
   height: 34px;
   padding: 6px 8px;
+}
+
+.gameplay-item {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(16, 24, 32, 0.42);
 }
 
 .status,
@@ -226,6 +242,12 @@ textarea {
   }
 
   .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .field-grid,
+  .field-grid.triple,
+  .action-row {
     grid-template-columns: 1fr;
   }
 }
