@@ -55,6 +55,7 @@ select {
 }
 
 .workspace {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
   min-height: 100vh;
@@ -67,6 +68,33 @@ select {
   cursor: crosshair;
   touch-action: none;
   user-select: none;
+}
+
+.playtest-preview-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #101820;
+}
+
+.playtest-preview-shell .preview-panel {
+  height: 100%;
+}
+
+.playtest-panel {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  display: grid;
+  gap: 14px;
+  width: min(420px, calc(100vw - 520px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(23, 33, 44, 0.88);
+  backdrop-filter: blur(10px);
 }
 
 .preview-panel canvas {
@@ -145,6 +173,8 @@ select {
 .field-grid,
 .field-row,
 .action-row,
+.control-grid,
+.mode-row,
 .tool-row {
   display: grid;
   gap: 8px;
@@ -152,8 +182,14 @@ select {
 
 .field-grid,
 .action-row,
+.control-grid,
+.mode-row,
 .tool-row {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.control-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .field-grid.triple {
@@ -246,7 +282,18 @@ select {
     grid-template-rows: minmax(420px, 66vh) auto;
   }
 
+  .playtest-panel {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+  }
+
   .preview-panel {
+    min-height: 420px;
+  }
+
+  .playtest-preview-shell {
     min-height: 420px;
   }
 
@@ -263,6 +310,8 @@ select {
   .field-grid,
   .field-grid.triple,
   .action-row,
+  .control-grid,
+  .mode-row,
   .tool-row {
     grid-template-columns: 1fr;
   }

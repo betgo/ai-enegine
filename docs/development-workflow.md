@@ -238,3 +238,11 @@ Editor 交互地图编辑阶段新增 smoke 要求：
 - Add Tower Slot 可以在 3D 预览中添加塔位，JSON 保持 valid。
 - Select 可以点击路径点或塔位，并拖拽到整数网格坐标。
 - 交互编辑只修改 `GameDefinition`，不保存 runtime state，不复制 gameplay 逻辑。
+
+Editor Playtest 阶段新增 smoke 要求：
+
+- 打开 Editor 页面后，Tools 显示 Edit / Playtest 模式。
+- draft valid 时可以进入 Playtest；draft invalid 时不能进入 Playtest。
+- Playtest 显示 Play / Pause / Step / Reset / Back to Edit 和 HUD。
+- Step 推进一次固定步进，Play 持续推进，Pause 停止推进，Reset 回到当前 frozen snapshot 的初始状态。
+- 返回 Edit 后继续显示最新 draft；Playtest 不保存 runtime state 到 `game.json`。

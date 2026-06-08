@@ -12,6 +12,7 @@
 - 第二阶段 `Playable Runtime MVP` 已完成最小运行入口，用户可以通过 `apps/player` 在浏览器里运行游戏。
 - 第三阶段 `Editor Gameplay Configuration MVP` 已完成最小创作闭环，用户可以在 `apps/editor` 配置地图与玩法并导出可运行 JSON。
 - 第四阶段 `Editor Interactive Map Editing MVP` 已完成首版 3D 预览交互编辑，用户可以直接在预览中选择、添加和拖拽路径点/塔位。
+- 第五阶段 `Editor Playtest Preview MVP` 已完成 Editor 内试玩闭环，用户可以在编辑器中用当前 valid draft 快照运行游戏。
 
 ## 2. 第一阶段完成状态
 
@@ -276,7 +277,65 @@
 - 浏览器 smoke：Editor 中新增/拖拽路径点和塔位后 JSON valid，Export JSON 可用。
 - README、项目计划和开发流程同步记录交互编辑能力与边界。
 
-## 7. 第一阶段历史路线图
+## 7. 第五阶段完成状态：Editor Playtest Preview MVP
+
+目标：让 Editor 内部可以直接试玩当前地图，减少导出到 Player 再验证的循环。
+
+已完成能力：
+
+- Editor 提供 Edit / Playtest 模式切换。
+- Playtest 使用进入时的 valid draft frozen snapshot。
+- Playtest 提供 Play / Pause / Step / Reset / Back to Edit。
+- Playtest HUD 展示 mode、status、elapsed、base hp、active monster count 和 wave progress。
+- Reset 销毁并重建 runtime，回到 frozen snapshot 初始状态。
+- 试玩期间表单仍可编辑 draft，但不会影响当前 run。
+- Playtest 不保存 runtime state 到 `game.json`。
+- Runtime gameplay、Runtime 公共 API 和 `game.json` schema 未改动。
+
+第五阶段原则：
+
+- Editor Playtest 只驱动 Runtime API：`tick(deltaMs)`、`render()`、`getState()`、`dispose()`。
+- 不依赖 `apps/player` 代码，不把 Player React 组件搬进 Editor。
+- 不做分屏同时编辑与试玩、不做一键发布、不做 server/multiplayer。
+
+### 阶段 23：Editor playtest state helper
+
+状态：已完成。
+
+目标：补充 Editor 本地 fixed-step 和 playtest snapshot helper。
+
+验收标准：
+
+- 固定步进默认 `SIM_STEP_MS = 100`。
+- helper 可消费累计时间并返回 steps 与 remainingMs。
+- snapshot 使用 deep clone，试玩状态不污染 draft。
+
+### 阶段 24：Editor Playtest runtime preview
+
+状态：已完成。
+
+目标：新增 Editor 内 Playtest runtime 视图。
+
+验收标准：
+
+- Playtest 挂载 Runtime 并读取 frozen snapshot。
+- Play/Pause/Step/Reset 行为与 Player 心智一致。
+- HUD 数据来自 `runtime.getState()`。
+- Playtest 不允许 3D 编辑，不写入 `GameDefinition`。
+
+### 阶段 25：Editor Playtest smoke 与文档同步
+
+状态：已完成。
+
+目标：验证 Editor 内试玩闭环并更新说明。
+
+验收标准：
+
+- `npm run typecheck`、`npm run test`、`npm run build` 通过。
+- 浏览器 smoke：Editor 进入 Playtest 后 Step/Play/Pause/Reset/HUD 正常，返回 Edit 后 JSON 未混入 runtime state。
+- README、项目计划和开发流程同步记录 Playtest 能力与边界。
+
+## 8. 第一阶段历史路线图
 
 ### 阶段 1：`game.json` schema
 
@@ -400,11 +459,11 @@
 - 保存内容可被 schema 校验和 runtime 加载。
 - 不引入账号、云存储或发布系统。
 
-## 8. 分支约定
+## 9. 分支约定
 
 后续功能、修复和文档更新默认直接在 `main` 分支推进。只有在需要隔离高风险实验、长期并行任务或外部协作时，才额外创建短生命周期功能分支。
 
-## 9. 风险清单
+## 10. 风险清单
 
 - 过早抽象：在只有一个玩法时抽象通用引擎，会拖慢 MVP 并制造错误边界。
 - Runtime 与 Editor 耦合：一旦玩法逻辑进入 UI，后续多人同步和服务端模拟会变困难。
@@ -414,7 +473,7 @@
 - 多人同步复杂度：必须先保证状态可序列化和逻辑 deterministic，再接入 Colyseus。
 - 视觉优先陷阱：漂亮编辑器不能替代可验证 runtime 行为。
 
-## 10. 推进原则
+## 11. 推进原则
 
 - 每次只完成一个小功能。
 - 每个功能都先定义数据，再实现 runtime 行为，最后接 UI。

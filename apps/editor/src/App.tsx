@@ -8,12 +8,16 @@ import {
 import { GameplayConfigPanel } from "./GameplayConfigPanel";
 import { InteractivePreview } from "./InteractivePreview";
 import { MapConfigPanel } from "./MapConfigPanel";
+import { PlaytestPreview } from "./PlaytestPreview";
 import {
   getSelectedMapObjectLabel,
   type EditorTool,
   type SelectedMapObject
 } from "./interactive-map-editor";
+import { createPlaytestSnapshot } from "./playtest-state";
 import sampleGame from "./game.sample.json";
+
+type EditorMode = "edit" | "playtest";
 
 const editorTools: Array<{ id: EditorTool; label: string }> = [
   { id: "select", label: "Select" },
@@ -27,7 +31,9 @@ export function App() {
   const [sceneSummary, setSceneSummary] = useState<SceneSummary | null>(null);
   const [draftGame, setDraftGame] = useState<GameDefinition>(() => structuredClone(sampleGame as GameDefinition));
   const [previewGame, setPreviewGame] = useState<GameDefinition>(() => structuredClone(sampleGame as GameDefinition));
+  const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [editorTool, setEditorTool] = useState<EditorTool>("select");
+  const [playtestGame, setPlaytestGame] = useState<GameDefinition | null>(null);
   const [selectedObject, setSelectedObject] = useState<SelectedMapObject | null>(null);
   const validation = useMemo(() => validateGameDefinition(draftGame), [draftGame]);
   const gameJson = useMemo(() => JSON.stringify(draftGame, null, 2), [draftGame]);
@@ -40,19 +46,43 @@ export function App() {
 
   const validationMessage = validation.ok ? "JSON valid" : validation.errors.join(", ");
   const selectedLabel = getSelectedMapObjectLabel(selectedObject);
+  const isPlaytestMode = editorMode === "playtest" && playtestGame !== null;
+
+  function enterEditMode() {
+    setEditorMode("edit");
+    setPlaytestGame(null);
+  }
+
+  function enterPlaytestMode() {
+    if (!validation.ok) {
+      return;
+    }
+
+    setSelectedObject(null);
+    setPlaytestGame(createPlaytestSnapshot(draftGame));
+    setEditorMode("playtest");
+  }
 
   return (
     <main className="app-shell">
       <section className="workspace">
-        <InteractivePreview
-          game={previewGame}
-          onChange={setDraftGame}
-          onError={setError}
-          onSceneSummaryChange={setSceneSummary}
-          onSelectedObjectChange={setSelectedObject}
-          selectedObject={selectedObject}
-          tool={editorTool}
-        />
+        {isPlaytestMode ? (
+          <PlaytestPreview
+            game={playtestGame}
+            onBackToEdit={enterEditMode}
+            onError={setError}
+          />
+        ) : (
+          <InteractivePreview
+            game={previewGame}
+            onChange={setDraftGame}
+            onError={setError}
+            onSceneSummaryChange={setSceneSummary}
+            onSelectedObjectChange={setSelectedObject}
+            selectedObject={selectedObject}
+            tool={editorTool}
+          />
+        )}
         <aside className="inspector" aria-label="Map editor">
           <header className="inspector-header">
             <h1>Map Editor</h1>
@@ -62,11 +92,31 @@ export function App() {
 
           <section className="editor-section" aria-labelledby="tools-heading">
             <h2 id="tools-heading">Tools</h2>
+            <div className="mode-row" role="group" aria-label="Editor mode">
+              <button
+                aria-pressed={editorMode === "edit"}
+                className={editorMode === "edit" ? "active-tool" : undefined}
+                type="button"
+                onClick={enterEditMode}
+              >
+                Edit
+              </button>
+              <button
+                aria-pressed={editorMode === "playtest"}
+                className={editorMode === "playtest" ? "active-tool" : undefined}
+                disabled={!validation.ok}
+                type="button"
+                onClick={enterPlaytestMode}
+              >
+                Playtest
+              </button>
+            </div>
             <div className="tool-row" role="group" aria-label="Editor tools">
               {editorTools.map((tool) => (
                 <button
                   aria-pressed={editorTool === tool.id}
                   className={editorTool === tool.id ? "active-tool" : undefined}
+                  disabled={editorMode !== "edit"}
                   key={tool.id}
                   type="button"
                   onClick={() => setEditorTool(tool.id)}
@@ -77,9 +127,19 @@ export function App() {
             </div>
             <dl>
               <div>
+                <dt>Mode</dt>
+                <dd>{editorMode}</dd>
+              </div>
+              <div>
                 <dt>Selected</dt>
                 <dd>{selectedLabel}</dd>
               </div>
+              {playtestGame ? (
+                <div>
+                  <dt>Playtest source</dt>
+                  <dd>{playtestGame.map.name}</dd>
+                </div>
+              ) : null}
             </dl>
           </section>
 
