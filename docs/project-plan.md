@@ -11,6 +11,7 @@
 - 第一阶段 `3D Tower Defense Runtime` 已完成到本地 MVP 闭环。
 - 第二阶段 `Playable Runtime MVP` 已完成最小运行入口，用户可以通过 `apps/player` 在浏览器里运行游戏。
 - 第三阶段 `Editor Gameplay Configuration MVP` 已完成最小创作闭环，用户可以在 `apps/editor` 配置地图与玩法并导出可运行 JSON。
+- 第四阶段 `Editor Interactive Map Editing MVP` 已完成首版 3D 预览交互编辑，用户可以直接在预览中选择、添加和拖拽路径点/塔位。
 
 ## 2. 第一阶段完成状态
 
@@ -216,7 +217,66 @@
 - `npm run typecheck`、`npm run test`、`npm run build` 通过。
 - 浏览器 smoke：Editor 修改 base/tower/wave 后 JSON valid，导出 JSON，Player 导入后 Play/Pause/Step/Reset 可用，HUD 正常。
 
-## 6. 第一阶段历史路线图
+## 6. 第四阶段完成状态：Editor Interactive Map Editing MVP
+
+目标：让 Editor 左侧 3D 预览成为可交互地图编辑入口，首版覆盖路径点和塔位。
+
+已完成能力：
+
+- Editor 提供 Select、Add Path Point 和 Add Tower Slot 三个工具模式。
+- 3D 预览可以显示可点击路径点 marker。
+- 用户可以点击选择路径点或塔位。
+- 用户可以拖拽选中的路径点或塔位，落点吸附到整数网格并 clamp 到地图范围内。
+- Add Path Point 在第一个 path 末尾追加路径点。
+- Add Tower Slot 在点击网格处新增塔位。
+- 右侧表单、JSON 和 runtime preview 与交互编辑同步。
+- Runtime gameplay 和 `game.json` schema 未改动。
+
+第四阶段原则：
+
+- 交互编辑只修改 `GameDefinition` JSON。
+- 首版只编辑第一个 `map.paths[0]`，不做多路径管理。
+- 不做障碍格、路径新增/删除、路径重命名、camera 控制、Player/Server 接入或 Runtime 公共 API 扩张。
+
+### 阶段 20：交互地图 helper
+
+状态：已完成。
+
+目标：抽出 pointer 坐标、网格 clamp 和 selected object 应用 helper。
+
+验收标准：
+
+- pointer client 坐标可转为 normalized device coordinates。
+- raycast 得到的地图点可四舍五入并 clamp 到地图范围。
+- selected path point 和 tower slot 可复用已有 editor state helper 更新。
+- 单测覆盖核心转换和不可变更新。
+
+### 阶段 21：3D 预览工具与拖拽
+
+状态：已完成。
+
+目标：在 Editor 预览中接入 Select、Add Path Point 和 Add Tower Slot。
+
+验收标准：
+
+- 可以点击 3D marker 选择路径点或塔位。
+- 可以拖拽选中对象到目标网格。
+- 可以点击网格添加主路径点或塔位。
+- Inspector 显示当前工具和选中对象。
+
+### 阶段 22：交互编辑 smoke 与文档同步
+
+状态：已完成。
+
+目标：验证交互编辑闭环并更新说明。
+
+验收标准：
+
+- `npm run typecheck`、`npm run test`、`npm run build` 通过。
+- 浏览器 smoke：Editor 中新增/拖拽路径点和塔位后 JSON valid，Export JSON 可用。
+- README、项目计划和开发流程同步记录交互编辑能力与边界。
+
+## 7. 第一阶段历史路线图
 
 ### 阶段 1：`game.json` schema
 
@@ -340,11 +400,11 @@
 - 保存内容可被 schema 校验和 runtime 加载。
 - 不引入账号、云存储或发布系统。
 
-## 7. 分支约定
+## 8. 分支约定
 
 后续功能、修复和文档更新默认直接在 `main` 分支推进。只有在需要隔离高风险实验、长期并行任务或外部协作时，才额外创建短生命周期功能分支。
 
-## 8. 风险清单
+## 9. 风险清单
 
 - 过早抽象：在只有一个玩法时抽象通用引擎，会拖慢 MVP 并制造错误边界。
 - Runtime 与 Editor 耦合：一旦玩法逻辑进入 UI，后续多人同步和服务端模拟会变困难。
@@ -354,7 +414,7 @@
 - 多人同步复杂度：必须先保证状态可序列化和逻辑 deterministic，再接入 Colyseus。
 - 视觉优先陷阱：漂亮编辑器不能替代可验证 runtime 行为。
 
-## 9. 推进原则
+## 10. 推进原则
 
 - 每次只完成一个小功能。
 - 每个功能都先定义数据，再实现 runtime 行为，最后接 UI。

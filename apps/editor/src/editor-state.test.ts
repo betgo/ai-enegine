@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { GameDefinition } from "@ai-enegine/schema";
 import {
+  addPathPointAt,
+  addTowerSlotAt,
   addPathPoint,
   addTowerSlot,
   removePathPoint,
@@ -56,6 +58,22 @@ describe("editor state helpers", () => {
 
     expect(newSlot).toEqual({ id: "slot-4", x: 0, y: 0 });
     expect(nextGame.map.tiles).toContainEqual({ x: 0, y: 0, kind: "tower-slot" });
+  });
+
+  it("adds an editable path point at a picked grid position", () => {
+    const nextGame = addPathPointAt(game, "main-path", { x: 8, y: 4 });
+
+    expect(nextGame.map.paths[0].points.at(-1)).toEqual({ x: 8, y: 4 });
+    expect(nextGame.map.tiles).toContainEqual({ x: 8, y: 4, kind: "path" });
+    expect(nextGame.map.paths[0].points).toHaveLength(game.map.paths[0].points.length + 1);
+  });
+
+  it("adds a tower slot at a picked grid position", () => {
+    const nextGame = addTowerSlotAt(game, { x: 7, y: 1 });
+    const newSlot = nextGame.map.towerSlots.at(-1);
+
+    expect(newSlot).toEqual({ id: "slot-4", x: 7, y: 1 });
+    expect(nextGame.map.tiles).toContainEqual({ x: 7, y: 1, kind: "tower-slot" });
   });
 
   it("deduplicates derived tiles with tower slots taking priority", () => {

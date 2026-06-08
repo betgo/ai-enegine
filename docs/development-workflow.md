@@ -230,3 +230,11 @@ Playable Runtime 阶段新增 smoke 要求：
 - Step 推进一次固定步进。
 - Reset 回到初始状态。
 - HUD 与 `runtime.getState()` 一致。
+
+Editor 交互地图编辑阶段新增 smoke 要求：
+
+- 打开 Editor 页面后，Tools 显示 Select、Add Path Point 和 Add Tower Slot。
+- Add Path Point 可以在 3D 预览中追加主路径点，JSON 保持 valid。
+- Add Tower Slot 可以在 3D 预览中添加塔位，JSON 保持 valid。
+- Select 可以点击路径点或塔位，并拖拽到整数网格坐标。
+- 交互编辑只修改 `GameDefinition`，不保存 runtime state，不复制 gameplay 逻辑。

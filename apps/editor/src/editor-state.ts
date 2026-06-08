@@ -66,13 +66,23 @@ export function updateTowerSlot(
 }
 
 export function addPathPoint(game: GameDefinition, pathId: string): GameDefinition {
+  const path = game.map.paths.find((candidate) => candidate.id === pathId);
+
+  return addPathPointAt(game, pathId, getNextPathPoint(path?.points ?? []));
+}
+
+export function addPathPointAt(
+  game: GameDefinition,
+  pathId: string,
+  point: MapPoint
+): GameDefinition {
   return syncMapTiles({
     ...game,
     map: {
       ...game.map,
       paths: game.map.paths.map((path) => (
         path.id === pathId
-          ? { ...path, points: [...path.points, getNextPathPoint(path.points)] }
+          ? { ...path, points: [...path.points, point] }
           : path
       ))
     }
@@ -103,10 +113,14 @@ export function removePathPoint(
 }
 
 export function addTowerSlot(game: GameDefinition): GameDefinition {
+  return addTowerSlotAt(game, { x: 0, y: 0 });
+}
+
+export function addTowerSlotAt(game: GameDefinition, point: MapPoint): GameDefinition {
   const slot: TowerSlotDefinition = {
     id: `slot-${game.map.towerSlots.length + 1}`,
-    x: 0,
-    y: 0
+    x: point.x,
+    y: point.y
   };
 
   return syncMapTiles({

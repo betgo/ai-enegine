@@ -1,26 +1,34 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  createTowerDefenseRuntime,
-  type SceneSummary,
-  type TowerDefenseRuntime
-} from "@ai-enegine/runtime";
+import type { SceneSummary } from "@ai-enegine/runtime";
 import { validateGameDefinition, type GameDefinition } from "@ai-enegine/schema";
 import {
   exportGameJson,
   importGameJson
 } from "./browser-file";
 import { GameplayConfigPanel } from "./GameplayConfigPanel";
+import { InteractivePreview } from "./InteractivePreview";
 import { MapConfigPanel } from "./MapConfigPanel";
+import {
+  getSelectedMapObjectLabel,
+  type EditorTool,
+  type SelectedMapObject
+} from "./interactive-map-editor";
 import sampleGame from "./game.sample.json";
 
+const editorTools: Array<{ id: EditorTool; label: string }> = [
+  { id: "select", label: "Select" },
+  { id: "add-path-point", label: "Add Path Point" },
+  { id: "add-tower-slot", label: "Add Tower Slot" }
+];
+
 export function App() {
-  const viewportRef = useRef<HTMLDivElement | null>(null);
-  const runtimeRef = useRef<TowerDefenseRuntime | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sceneSummary, setSceneSummary] = useState<SceneSummary | null>(null);
   const [draftGame, setDraftGame] = useState<GameDefinition>(() => structuredClone(sampleGame as GameDefinition));
   const [previewGame, setPreviewGame] = useState<GameDefinition>(() => structuredClone(sampleGame as GameDefinition));
+  const [editorTool, setEditorTool] = useState<EditorTool>("select");
+  const [selectedObject, setSelectedObject] = useState<SelectedMapObject | null>(null);
   const validation = useMemo(() => validateGameDefinition(draftGame), [draftGame]);
   const gameJson = useMemo(() => JSON.stringify(draftGame, null, 2), [draftGame]);
 
@@ -30,52 +38,50 @@ export function App() {
     }
   }, [draftGame, validation.ok]);
 
-  useEffect(() => {
-    const container = viewportRef.current;
-
-    if (!container) {
-      setSceneSummary(null);
-      return;
-    }
-
-    try {
-      const runtime = createTowerDefenseRuntime({
-        game: previewGame,
-        container,
-        width: container.clientWidth,
-        height: container.clientHeight
-      });
-
-      runtime.render();
-      runtimeRef.current = runtime;
-      setSceneSummary(runtime.getSceneSummary());
-      setError(null);
-
-      return () => {
-        runtime.dispose();
-        if (runtimeRef.current === runtime) {
-          runtimeRef.current = null;
-        }
-      };
-    } catch (caughtError) {
-      runtimeRef.current = null;
-      setSceneSummary(null);
-      setError(caughtError instanceof Error ? caughtError.message : "Runtime preview failed");
-    }
-  }, [previewGame]);
-
   const validationMessage = validation.ok ? "JSON valid" : validation.errors.join(", ");
+  const selectedLabel = getSelectedMapObjectLabel(selectedObject);
 
   return (
     <main className="app-shell">
       <section className="workspace">
-        <div className="preview-panel" ref={viewportRef} aria-label="3D tower defense runtime preview" />
+        <InteractivePreview
+          game={previewGame}
+          onChange={setDraftGame}
+          onError={setError}
+          onSceneSummaryChange={setSceneSummary}
+          onSelectedObjectChange={setSelectedObject}
+          selectedObject={selectedObject}
+          tool={editorTool}
+        />
         <aside className="inspector" aria-label="Map editor">
           <header className="inspector-header">
             <h1>Map Editor</h1>
             <p className={validation.ok ? "status" : "error"}>{validationMessage}</p>
             {error ? <p className="error">{error}</p> : null}
           </header>
+
+          <section className="editor-section" aria-labelledby="tools-heading">
+            <h2 id="tools-heading">Tools</h2>
+            <div className="tool-row" role="group" aria-label="Editor tools">
+              {editorTools.map((tool) => (
+                <button
+                  aria-pressed={editorTool === tool.id}
+                  className={editorTool === tool.id ? "active-tool" : undefined}
+                  key={tool.id}
+                  type="button"
+                  onClick={() => setEditorTool(tool.id)}
+                >
+                  {tool.label}
+                </button>
+              ))}
+            </div>
+            <dl>
+              <div>
+                <dt>Selected</dt>
+                <dd>{selectedLabel}</dd>
+              </div>
+            </dl>
+          </section>
 
           <section className="editor-section" aria-labelledby="file-actions-heading">
             <h2 id="file-actions-heading">File</h2>

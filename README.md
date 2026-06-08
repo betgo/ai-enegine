@@ -9,7 +9,7 @@ Web 3D UGC 游戏平台的 Tower Defense MVP。当前已完成本地创作与运
 - monorepo workspace 基础结构。
 - `packages/schema`：`game.json` TypeScript 类型与最小校验，覆盖 map、units、towers、waves、base 和 triggers。
 - `packages/runtime`：独立 Three.js runtime，可读取 `GameDefinition` 生成基础地图场景，并通过显式 `tick(deltaMs)` 推进怪物移动、塔攻击、血量、漏怪、波次和最小游戏状态。
-- `apps/editor`：Vite React 最小编辑器，支持地图尺寸、路径点、塔位、基地血量、怪物属性、防御塔和波次配置，调用 runtime 预览当前有效 JSON，并支持本地导入/导出 `game.json`。
+- `apps/editor`：Vite React 最小编辑器，支持地图尺寸、路径点、塔位、基地血量、怪物属性、防御塔和波次配置，调用 runtime 预览当前有效 JSON，支持在 3D 预览中选择、添加和拖拽路径点/塔位，并支持本地导入/导出 `game.json`。
 
 当前不做：
 
@@ -31,6 +31,12 @@ Editor Gameplay Configuration：
 - Editor 已支持配置 Tower Defense MVP 的核心玩法数据。
 - 地图配置仍只修改 `map` definition；玩法配置只修改 `base`、`units`、`towers` 和 `waves` definition。
 - Editor 不保存 runtime state，也不复制怪物移动、攻击、血量、波次或胜负逻辑。
+
+Editor Interactive Map Editing：
+
+- Editor 已支持 Select、Add Path Point 和 Add Tower Slot 三个 3D 预览工具。
+- 用户可以在 3D 预览中点击选择路径点或塔位，并拖拽到整数网格坐标。
+- 交互编辑仍只修改 `GameDefinition` JSON，不修改 Runtime gameplay 规则。
 
 ## 目录结构
 
@@ -72,8 +78,8 @@ http://127.0.0.1:5173/
 预期结果：
 
 - 页面显示 Map Editor 和 3D runtime preview。
-- Inspector 显示 File、Runtime、Map Size、Path Points、Tower Slots、Base、Monsters、Towers、Waves 和 `game.json` 区块。
-- 可以编辑地图尺寸、路径点、塔位、基地血量、怪物属性、防御塔和波次；schema 有效时 runtime preview 会重建。
+- Inspector 显示 Tools、File、Runtime、Map Size、Path Points、Tower Slots、Base、Monsters、Towers、Waves 和 `game.json` 区块。
+- 可以编辑地图尺寸、路径点、塔位、基地血量、怪物属性、防御塔和波次；也可以用 3D 预览工具选择、添加和拖拽路径点/塔位；schema 有效时 runtime preview 会重建。
 - 可以导出当前有效 `game.json`，也可以导入本地 JSON；无效导入会保留当前 draft/preview。
 - 画布中显示网格、路径、塔位标记和 blocked tile。
 
@@ -120,4 +126,4 @@ npm run build
 
 ## 当前状态
 
-`docs/project-plan.md` 第一阶段的阶段 1-10 已完成到本地 MVP 闭环。第二阶段 `Playable Runtime MVP` 已完成最小运行入口。第三阶段 `Editor Gameplay Configuration MVP` 已完成最小创作闭环：`apps/editor` 可以配置地图与玩法，导出的 `game.json` 可在 `apps/player` 导入运行。
+`docs/project-plan.md` 第一阶段的阶段 1-10 已完成到本地 MVP 闭环。第二阶段 `Playable Runtime MVP` 已完成最小运行入口。第三阶段 `Editor Gameplay Configuration MVP` 已完成最小创作闭环。第四阶段 `Editor Interactive Map Editing MVP` 已完成首版 3D 预览交互编辑：`apps/editor` 可以配置地图与玩法，导出的 `game.json` 可在 `apps/player` 导入运行。
