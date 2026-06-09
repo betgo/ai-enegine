@@ -1,6 +1,11 @@
+@import "./editor-shell.css";
+@import "./editor-viewport.css";
+@import "./editor-panels.css";
+@import "./editor-responsive.css";
+
 :root {
   color: #f4f7fb;
-  background: #101820;
+  background: #0d1015;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -15,6 +20,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 button,
@@ -25,149 +31,55 @@ select {
 }
 
 button {
-  min-height: 34px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 6px;
-  color: #f4f7fb;
-  background: #263646;
+  min-height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  color: #edf3f8;
+  background: rgba(35, 42, 53, 0.92);
   cursor: pointer;
 }
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  opacity: 0.42;
 }
 
 input,
 textarea,
 select {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 6px;
-  color: #f4f7fb;
-  background: #101820;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  color: #edf3f8;
+  background: rgba(20, 24, 31, 0.94);
 }
 
-.app-shell {
-  min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(16, 24, 32, 0.92), rgba(16, 24, 32, 0.98)),
-    #101820;
+.hidden-file-input {
+  display: none;
 }
 
-.workspace {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
-  min-height: 100vh;
-}
-
-.preview-panel {
-  min-height: 100vh;
-  overflow: hidden;
-  background: #101820;
-  cursor: crosshair;
-  touch-action: none;
-  user-select: none;
-}
-
-.playtest-preview-shell {
-  position: relative;
-  min-height: 100vh;
-  overflow: hidden;
-  background: #101820;
-}
-
-.playtest-preview-shell .preview-panel {
-  height: 100%;
-}
-
-.playtest-panel {
-  position: absolute;
-  left: 24px;
-  bottom: 24px;
-  display: grid;
-  gap: 14px;
-  width: min(420px, calc(100vw - 520px));
-  max-height: calc(100vh - 48px);
-  overflow: auto;
-  padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  background: rgba(23, 33, 44, 0.88);
-  backdrop-filter: blur(10px);
-}
-
-.preview-panel canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.inspector {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-height: 100vh;
-  overflow: auto;
-  padding: 24px;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  background: #17212c;
-}
-
-.inspector h1,
-.inspector h2,
-.inspector h3 {
-  margin: 0;
-}
-
-.inspector h1 {
-  font-size: 24px;
-  line-height: 1.15;
-}
-
-.inspector h2 {
-  font-size: 15px;
-}
-
-.inspector h3 {
-  color: #c7d2df;
-  font-size: 13px;
-}
-
-.inspector dl {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-}
-
-.inspector dl div {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.inspector dt {
-  color: #a9b7c8;
-  font-size: 13px;
-}
-
-.inspector dd {
-  margin: 0;
-  color: #ffffff;
-  font-weight: 700;
-}
-
-.inspector-header,
 .editor-section,
 .item-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .editor-section {
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.editor-section h2,
+.editor-section h3 {
+  margin: 0;
+}
+
+.editor-section h2 {
+  font-size: 13px;
+}
+
+.editor-section h3 {
+  color: #c6ced8;
+  font-size: 12px;
 }
 
 .field-grid,
@@ -182,32 +94,18 @@ select {
 
 .field-grid,
 .action-row,
-.control-grid,
-.mode-row,
-.tool-row {
+.mode-row {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.control-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.field-grid.triple {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
+.field-grid.triple,
+.control-grid,
 .tool-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.active-tool {
-  border-color: rgba(74, 222, 128, 0.85);
-  color: #ccf5df;
-  background: rgba(37, 125, 84, 0.32);
-}
-
 .field-row {
-  grid-template-columns: minmax(56px, 0.8fr) repeat(2, minmax(78px, 1fr)) minmax(82px, auto);
+  grid-template-columns: minmax(56px, 0.8fr) repeat(2, minmax(70px, 1fr)) minmax(76px, auto);
   align-items: end;
 }
 
@@ -215,18 +113,14 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-}
-
-.hidden-file-input {
-  display: none;
+  gap: 10px;
 }
 
 .number-field,
 .select-field {
   display: grid;
   gap: 4px;
-  color: #a9b7c8;
+  color: #9ca8b8;
   font-size: 12px;
 }
 
@@ -234,85 +128,48 @@ select {
 .select-field select {
   width: 100%;
   min-width: 0;
-  height: 34px;
-  padding: 6px 8px;
+  height: 30px;
+  padding: 5px 8px;
 }
 
 .gameplay-item {
   display: grid;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  background: rgba(16, 24, 32, 0.42);
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  background: rgba(18, 22, 29, 0.72);
 }
 
 .status,
 .error {
   margin: 0;
-  padding: 12px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.4;
+  padding: 10px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .status {
-  color: #ccf5df;
-  background: rgba(37, 125, 84, 0.25);
+  color: #9fe7b7;
+  background: rgba(35, 113, 72, 0.28);
 }
 
 .error {
-  color: #ffe3e3;
-  background: rgba(178, 61, 61, 0.3);
+  color: #ffd1d1;
+  background: rgba(151, 48, 48, 0.3);
 }
 
 .json-section textarea {
   width: 100%;
   min-height: 220px;
-  padding: 12px;
+  padding: 10px;
   resize: vertical;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
-@media (max-width: 760px) {
-  .workspace {
-    grid-template-columns: 1fr;
-    grid-template-rows: minmax(420px, 66vh) auto;
-  }
-
-  .playtest-panel {
-    left: 16px;
-    right: 16px;
-    bottom: 16px;
-    width: auto;
-  }
-
-  .preview-panel {
-    min-height: 420px;
-  }
-
-  .playtest-preview-shell {
-    min-height: 420px;
-  }
-
-  .inspector {
-    max-height: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    border-left: 0;
-  }
-
-  .field-row {
-    grid-template-columns: 1fr;
-  }
-
-  .field-grid,
-  .field-grid.triple,
-  .action-row,
-  .control-grid,
-  .mode-row,
-  .tool-row {
-    grid-template-columns: 1fr;
-  }
+.compact-json textarea {
+  min-height: 520px;
 }

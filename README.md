@@ -9,7 +9,7 @@ Web 3D UGC 游戏平台的 Tower Defense MVP。当前已完成本地创作与运
 - monorepo workspace 基础结构。
 - `packages/schema`：`game.json` TypeScript 类型与最小校验，覆盖 map、units、towers、waves、base 和 triggers。
 - `packages/runtime`：独立 Three.js runtime，可读取 `GameDefinition` 生成基础地图场景，并通过显式 `tick(deltaMs)` 推进怪物移动、塔攻击、血量、漏怪、波次和最小游戏状态。
-- `apps/editor`：Vite React 最小编辑器，支持地图尺寸、路径点、塔位、基地血量、怪物属性、防御塔和波次配置，调用 runtime 预览当前有效 JSON，支持在 3D 预览中选择、添加和拖拽路径点/塔位，支持 Editor 内 Playtest，并支持本地导入/导出 `game.json`。
+- `apps/editor`：Vite React 最小编辑器，支持地图尺寸、路径点、塔位、基地血量、怪物属性、防御塔和波次配置；编辑态 Viewport 默认显示空场景网格，Playtest 模式调用 runtime 运行当前有效 JSON，并支持本地导入/导出 `game.json`。
 
 当前不做：
 
@@ -32,10 +32,10 @@ Editor Gameplay Configuration：
 - 地图配置仍只修改 `map` definition；玩法配置只修改 `base`、`units`、`towers` 和 `waves` definition。
 - Editor 不保存 runtime state，也不复制怪物移动、攻击、血量、波次或胜负逻辑。
 
-Editor Interactive Map Editing：
+Editor Map Editing：
 
-- Editor 已支持 Select、Add Path Point 和 Add Tower Slot 三个 3D 预览工具。
-- 用户可以在 3D 预览中点击选择路径点或塔位，并拖拽到整数网格坐标。
+- Editor 已支持通过配置面板编辑地图尺寸、路径点和塔位。
+- 专业 UI Shell 首版中，编辑态中间 Viewport 默认保持空场景，不再默认渲染塔防地图类型；路径点和塔位画布交互作为后续可选演进。
 - 交互编辑仍只修改 `GameDefinition` JSON，不修改 Runtime gameplay 规则。
 
 Editor Playtest Preview：
@@ -43,6 +43,12 @@ Editor Playtest Preview：
 - Editor 已支持 Edit / Playtest 模式切换。
 - Playtest 使用进入时的 valid draft 快照，提供 Play / Pause / Step / Reset 和 HUD。
 - Playtest 只读取 Runtime state，不保存 runtime state 到 `game.json`。
+
+Editor Professional UI Shell：
+
+- Editor 已升级为专业工具型 UI 首版，布局包含顶部菜单栏、工具栏、场景树、Viewport、Inspector 和底部资源/日志面板。
+- 首版采用“功能化外壳”路线，只真实编辑当前 `GameDefinition` 支持的数据；发布、AI、物品、技能、复杂行为、真实 2D/3D 视图切换等能力仍作为后续阶段。
+- 详细设计见 `docs/editor-professional-ui-shell.md`。
 
 ## 目录结构
 
@@ -58,6 +64,8 @@ packages/
   shared/        # 共享工具占位，当前保持空
 
 docs/            # 项目计划、架构原则、开发流程、Agent prompts
+  editor-professional-ui-shell.md  # Editor 专业工具型 UI 设计文档
+  editor-feature-prd.md            # Editor 功能化 PRD
 goal-1/          # Goal Mode 规划与任务记录
 goal-2/          # 阶段 4-10 的三 Agent 执行记录
 goal-3/          # Playable Runtime MVP 的 Goal Mode 执行记录
@@ -83,12 +91,12 @@ http://127.0.0.1:5173/
 
 预期结果：
 
-- 页面显示 Map Editor 和 3D runtime preview。
+- 页面显示专业工具型 Editor 和默认空场景 Viewport。
 - Inspector 显示 Tools、File、Runtime、Map Size、Path Points、Tower Slots、Base、Monsters、Towers、Waves 和 `game.json` 区块。
-- 可以编辑地图尺寸、路径点、塔位、基地血量、怪物属性、防御塔和波次；也可以用 3D 预览工具选择、添加和拖拽路径点/塔位；schema 有效时 runtime preview 会重建。
+- 可以编辑地图尺寸、路径点、塔位、基地血量、怪物属性、防御塔和波次；编辑态中间 Viewport 默认显示空场景网格，不渲染塔防地图类型。
 - 可以切换到 Playtest，用当前 valid draft 快照运行游戏，Play / Pause / Step / Reset 和 HUD 可用。
 - 可以导出当前有效 `game.json`，也可以导入本地 JSON；无效导入会保留当前 draft/preview。
-- 画布中显示网格、路径、塔位标记和 blocked tile。
+- 画布中显示空场景网格、轴线、原点和变换辅助线。
 
 ## 本地运行 Player
 
@@ -133,4 +141,4 @@ npm run build
 
 ## 当前状态
 
-`docs/project-plan.md` 第一阶段的阶段 1-10 已完成到本地 MVP 闭环。第二阶段 `Playable Runtime MVP` 已完成最小运行入口。第三阶段 `Editor Gameplay Configuration MVP` 已完成最小创作闭环。第四阶段 `Editor Interactive Map Editing MVP` 已完成首版 3D 预览交互编辑。第五阶段 `Editor Playtest Preview MVP` 已完成 Editor 内试玩闭环：`apps/editor` 可以配置、编辑和试玩当前地图，导出的 `game.json` 仍可在 `apps/player` 导入运行。
+`docs/project-plan.md` 第一阶段的阶段 1-10 已完成到本地 MVP 闭环。第二阶段 `Playable Runtime MVP` 已完成最小运行入口。第三阶段 `Editor Gameplay Configuration MVP` 已完成最小创作闭环。第四阶段 `Editor Interactive Map Editing MVP` 已完成首版 3D 预览交互编辑。第五阶段 `Editor Playtest Preview MVP` 已完成 Editor 内试玩闭环。第六阶段 `Editor Professional UI Shell MVP` 已完成首版：`apps/editor` 可以用专业工具型 UI 配置、编辑和试玩当前地图；编辑态中间 Viewport 默认保持空场景，导出的 `game.json` 仍可在 `apps/player` 导入运行。下一阶段功能化需求见 `docs/editor-feature-prd.md`。

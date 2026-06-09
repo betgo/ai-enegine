@@ -1,0 +1,30 @@
+Use case: ui-mockup
+Asset type: functional UI design state based on an existing editor screenshot
+Input image role: Use docs/img/workspace.png as the composition, layout, density, and dark professional editor style reference.
+
+Primary request:
+Create Function Design 02 for the ai-enegine Editor PRD: Resource Library search, category filtering, and click-to-select object workflow.
+
+Preserve from the reference:
+- Same desktop editor window layout and dark professional styling.
+- Left scene tree, center empty scene grid viewport, right inspector, bottom panel.
+
+State to show:
+- Bottom panel Resources tab is active and visually emphasized.
+- Resource search field contains "tower".
+- Category chips or sidebar show All, Map, Units, Buildings, Waves; Buildings/Towers category is selected.
+- Resource cards show tower-1, slot-a, slot-b, slot-c, wave-1, monster-basic, each with concise metadata.
+- tower-1 resource card is selected with a strong focus outline.
+- Clicking tower-1 has selected the same object in Scene Tree and Inspector.
+- Right Inspector shows a compact tower summary: slotId slot-a, damage 2, range 3, interval 1000.
+- Empty unsupported categories such as Effects, Audio, Items, UI, Scripts are visible as disabled or empty states.
+
+Functional cues:
+- Show that resource cards are navigational assets, not decorative thumbnails.
+- Include real microcopy: "Search resources", "8 results", "Selected tower-1", "Jump to Inspector".
+- Bottom panel should feel useful and data-rich, not a static gallery.
+
+Avoid:
+- No fantasy terrain in edit viewport.
+- No unrelated character art dominating the resource cards.
+- No long paragraphs of text.

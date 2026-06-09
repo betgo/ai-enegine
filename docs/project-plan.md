@@ -13,6 +13,7 @@
 - 第三阶段 `Editor Gameplay Configuration MVP` 已完成最小创作闭环，用户可以在 `apps/editor` 配置地图与玩法并导出可运行 JSON。
 - 第四阶段 `Editor Interactive Map Editing MVP` 已完成首版 3D 预览交互编辑，用户可以直接在预览中选择、添加和拖拽路径点/塔位。
 - 第五阶段 `Editor Playtest Preview MVP` 已完成 Editor 内试玩闭环，用户可以在编辑器中用当前 valid draft 快照运行游戏。
+- 第六阶段 `Editor Professional UI Shell MVP` 已完成首版；Editor 已具备接近 Warcraft 3 World Editor 心智的专业工具型 UI 壳层。
 
 ## 2. 第一阶段完成状态
 
@@ -335,7 +336,159 @@
 - 浏览器 smoke：Editor 进入 Playtest 后 Step/Play/Pause/Reset/HUD 正常，返回 Edit 后 JSON 未混入 runtime state。
 - README、项目计划和开发流程同步记录 Playtest 能力与边界。
 
-## 8. 第一阶段历史路线图
+## 8. 第六阶段完成状态：Editor Professional UI Shell MVP
+
+目标：把 Editor 从“预览画布 + 配置表单”升级为专业工具型 UI，为后续对象系统、资源管理、触发器编辑和发布流程预留稳定位置。
+
+设计文档：
+
+- `docs/editor-professional-ui-shell.md`
+
+已完成能力：
+
+- 顶部菜单栏：文件、编辑、视图、地图、对象、触发器、工具、窗口、帮助。
+- 工具栏：导入/导出、编辑工具、显示开关、Edit / Playtest、发布占位。
+- 场景树：从 `GameDefinition` 派生地图、路径、塔位、基地、怪物、防御塔、波次和触发器层级。
+- Viewport：编辑态默认显示空场景网格，不再默认渲染塔防地图类型；Playtest 模式继续复用现有 Three.js runtime preview，并在外层增加视图模式、显示开关、小地图和 WebGL fallback 视觉层。
+- Inspector：承载属性、玩法、地图和 JSON tabs，优先编辑当前 schema 已支持字段。
+- 底部面板：承载资源库、日志、搜索结果和错误列表。
+
+第六阶段原则：
+
+- 首版采用“功能化外壳”路线，只真实编辑当前 `GameDefinition` 支持的数据。
+- 不修改 `game.json` schema，不扩展 Runtime 公共 API。
+- 不实现发布系统、AI 生成、物品/技能/复杂行为、真实 2D/3D camera 切换或完整资源管理器。
+- 现有地图配置、玩法配置、导入导出和 Playtest 不得回退；路径点和塔位的画布交互进入后续可选演进。
+
+### 阶段 26：Editor UI shell layout
+
+状态：已完成。
+
+目标：建立六区编辑器布局。
+
+验收标准：
+
+- 顶部菜单栏、工具栏、场景树、Viewport、Inspector 和底部面板均可见。
+- 桌面宽屏下布局接近参考图结构。
+- 窄屏下不出现关键内容不可访问或文本严重溢出。
+
+### 阶段 27：Scene tree、Inspector 和资源/日志面板
+
+状态：已完成。
+
+目标：从现有 `GameDefinition` 派生专业编辑器信息架构。
+
+验收标准：
+
+- 场景树能展示 map、paths、towerSlots、base、units、towers、waves 和 triggers。
+- 可映射到现有选择模型的路径点和塔位可与 Scene tree / Inspector 选择同步。
+- Inspector 能继续编辑当前 schema 已支持字段。
+- 底部面板能展示资源摘要、validation、导入导出、Playtest 和 runtime error 日志。
+
+### 阶段 28：Professional UI shell smoke 与文档同步
+
+状态：已完成。
+
+目标：验证专业 UI 壳层不破坏当前 Editor 闭环。
+
+验收标准：
+
+- `npm run typecheck`、`npm run test`、`npm run build` 通过。
+- 浏览器 smoke：地图配置、玩法配置、导入导出、编辑态空场景 Viewport 和 Playtest 仍可用。
+- README、项目计划和设计文档同步记录能力、边界与未实现占位。
+
+## 9. 第七阶段计划：Editor Functional Tools MVP
+
+目标：基于 `docs/editor-feature-prd.md`，把现有 Editor UI shell 中的占位能力补成真实可用的关卡编辑工作流。
+
+产品文档：
+
+- `docs/editor-feature-prd.md`
+
+计划能力：
+
+- 统一对象选择模型：场景树、资源库、Inspector 和状态栏共享当前选中对象。
+- 对象级 Inspector：按 map、base、path point、tower slot、unit、tower、wave 展示并编辑当前 schema 已支持字段。
+- 资源库搜索、分类过滤和点击选择。
+- 真实操作日志和结构化错误列表。
+- Undo / Redo 历史栈。
+- 安全删除 tower、wave、可删除 path point 和未被引用 tower slot。
+- Playtest 前置检查和 dirty / valid 状态提示。
+- 编辑态空场景 Viewport 的网格、轴线、边界显示开关。
+
+第七阶段原则：
+
+- 不扩展 `game.json` schema。
+- 不改变 Runtime gameplay，也不复制 Runtime simulation。
+- 不实现发布、AI、账号、云存储、脚本系统或真实 camera 切换。
+- 编辑态中间 Viewport 继续默认保持空场景；Playtest 模式才挂载 Runtime canvas。
+
+### 阶段 29：Selection 与对象级 Inspector MVP
+
+状态：待实现。
+
+目标：打通场景树、资源库、Inspector 的统一选择和对象编辑。
+
+验收标准：
+
+- 选择任意核心对象后 Inspector 展示正确字段。
+- 修改字段后 JSON tab 立即更新。
+- JSON valid 时 Playtest 可用。
+- 单测覆盖 selection label、父级回退和对象更新。
+
+### 阶段 30：资源库、搜索与日志
+
+状态：待实现。
+
+目标：让底部面板承担真实导航和反馈。
+
+验收标准：
+
+- 资源搜索和分类过滤可组合使用。
+- 点击资源卡可选中对应对象。
+- 编辑、导入、导出、Playtest 均写入真实日志。
+- 空分类有清晰空状态。
+
+### 阶段 31：错误列表与 Playtest 前置检查
+
+状态：待实现。
+
+目标：把 validation 和 runtime 错误变成可理解、可定位的工作流。
+
+验收标准：
+
+- invalid draft 不进入 Playtest。
+- 错误列表展示具体原因和建议入口。
+- 点击可定位错误时切换到对应对象或 tab。
+- runtime error 不污染 JSON。
+
+### 阶段 32：Undo / Redo 与安全删除
+
+状态：待实现。
+
+目标：补齐基础编辑安全网。
+
+验收标准：
+
+- Undo / Redo 对 Map 和 Gameplay 编辑有效。
+- 被引用对象不可删除。
+- 删除操作可 Undo。
+- Playtest 中不修改历史栈。
+
+### 阶段 33：Viewport 显示开关和 smoke
+
+状态：待实现。
+
+目标：让编辑态空场景浮层具备真实显示控制，并完成整体验证。
+
+验收标准：
+
+- 网格、轴线、边界开关真实改变空场景可见层。
+- Playtest runtime 不受编辑态显示开关影响。
+- `npm run typecheck`、`npm run test`、`npm run build` 通过。
+- README、项目计划和 PRD 状态同步。
+
+## 10. 第一阶段历史路线图
 
 ### 阶段 1：`game.json` schema
 
@@ -459,11 +612,11 @@
 - 保存内容可被 schema 校验和 runtime 加载。
 - 不引入账号、云存储或发布系统。
 
-## 9. 分支约定
+## 11. 分支约定
 
 后续功能、修复和文档更新默认直接在 `main` 分支推进。只有在需要隔离高风险实验、长期并行任务或外部协作时，才额外创建短生命周期功能分支。
 
-## 10. 风险清单
+## 12. 风险清单
 
 - 过早抽象：在只有一个玩法时抽象通用引擎，会拖慢 MVP 并制造错误边界。
 - Runtime 与 Editor 耦合：一旦玩法逻辑进入 UI，后续多人同步和服务端模拟会变困难。
@@ -473,7 +626,7 @@
 - 多人同步复杂度：必须先保证状态可序列化和逻辑 deterministic，再接入 Colyseus。
 - 视觉优先陷阱：漂亮编辑器不能替代可验证 runtime 行为。
 
-## 11. 推进原则
+## 13. 推进原则
 
 - 每次只完成一个小功能。
 - 每个功能都先定义数据，再实现 runtime 行为，最后接 UI。

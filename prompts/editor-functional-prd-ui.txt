@@ -1,0 +1,40 @@
+Use case: ui-mockup
+Asset type: product UI mockup for a web-based 3D UGC editor PRD
+Primary request: Create a polished high-fidelity desktop UI mockup for the next functional version of the ai-enegine Editor, based on the Editor feature PRD.
+
+Canvas and framing:
+- 16:9 landscape desktop screenshot composition.
+- Full application window, no browser chrome, no marketing page.
+- Professional game-editor/tool UI similar in density to Warcraft 3 World Editor, Unity, or Unreal editor, but as an original web app design.
+- Dark neutral workstation palette, restrained accents, crisp panels, small readable interface text.
+
+Main layout:
+- Top title/menu bar: project name "ai-enegine Editor", menu items File, Edit, View, Map, Object, Trigger, Tools, Window, Help.
+- Toolbar below: Import, Export, Save, Undo, Redo, Select, Delete, Playtest, Back to Edit, Publish disabled.
+- Left sidebar: Scene Tree with searchable hierarchical objects. Show Map Root, Terrain, Paths, main-path, Path Point #1-#4, Tower Slots, slot-a, slot-b, slot-c, Base, Units, monster-basic, Towers, tower-1 selected, Waves, wave-1, Triggers. The selected tower-1 row should be highlighted.
+- Center Viewport: editing mode shows an empty scene workspace, not a tower defense terrain. Use a clean perspective grid plane, X/Z axis lines, origin marker, map boundary rectangle, subtle transform gizmo. No castle, no houses, no monsters, no path road, no fantasy environment.
+- Viewport overlays: segmented 2D / 2.5D / 3D control, toggles Grid ON, Axis ON, Boundary ON, AI Area disabled, Vision disabled; zoom 100%; mini map placeholder.
+- Right Inspector: Object Inspector for selected "tower-1". Show editable fields slotId, range, attackIntervalMs, damage. Include validation status "JSON valid", dirty state "Unsaved changes", and a small reference warning area. Use compact form controls, dropdowns, numeric steppers, and disabled unsupported sections for Skills, Items, Events.
+- Bottom panel: tabs Resources, Logs, Errors. Show Resources active with search field containing "tower", category chips All, Map, Units, Buildings, Waves. Resource cards include tower-1, monster-basic, wave-1, slot-a. Also include a narrow log/error preview area with entries such as "[12:24:35] select: tower-1", "[12:24:41] edit: damage 1 -> 2", and one warning item "wave-1 reference check passed".
+- Status bar: show map size 10 x 7, selected tower-1, dirty, valid, history 12/50, playtest snapshot ready.
+
+Functional cues from PRD:
+- Scene Tree, Resource Library, Inspector, and Status Bar clearly share the same selected object.
+- Undo / Redo look enabled, Publish and unsupported categories look disabled.
+- Error list and logs look real and actionable, not placeholder lorem ipsum.
+- The UI should communicate a working editor workflow: select object, edit fields, validate, playtest, export.
+- Keep the central viewport empty and neutral by default.
+
+Style:
+- Sophisticated tool surface, utilitarian, dense but organized.
+- Thin separators, compact 4-6px radius controls, icons in toolbar, readable hierarchy.
+- Avoid one-note purple/blue gradient dominance; use dark graphite, cool gray, subtle teal/green valid states, amber warning accents, red error accents.
+
+Text:
+- Use concise UI labels. Prefer English identifiers and short labels that are likely to render legibly: tower-1, monster-basic, wave-1, JSON valid, Dirty, Playtest, Undo, Redo, Resources, Logs, Errors.
+- Avoid large paragraphs of text inside the mockup.
+
+Avoid:
+- No landing page, no hero section, no decorative blobs, no fantasy map in the edit viewport, no large 3D rendered game scene.
+- No brand logos other than the simple text ai-enegine Editor.
+- No random unrelated characters or creatures.

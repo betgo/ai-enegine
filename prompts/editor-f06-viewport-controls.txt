@@ -1,0 +1,35 @@
+Use case: ui-mockup
+Asset type: functional UI design state based on an existing editor screenshot
+Input image role: Use docs/img/workspace.png as the composition, layout, density, and dark professional editor style reference.
+
+Primary request:
+Create Function Design 06 for the ai-enegine Editor PRD: edit-mode Viewport display switches for empty scene workspace.
+
+Preserve from the reference:
+- Same overall editor window, menu, toolbar, left tree, right inspector, bottom panels.
+- Use the existing workspace.png style as the visual baseline.
+
+State to show:
+- Center Viewport is the main focus.
+- It is an empty neutral editor grid, no tower defense terrain.
+- Show grid plane, red X axis, blue Z axis, origin marker, map boundary rectangle, and subtle transform gizmo.
+- Viewport overlay controls:
+  2D / 2.5D / 3D segmented control with 2.5D active.
+  Toggle chips Grid ON, Axis ON, Boundary ON, AI Area disabled, Vision disabled.
+  Mini map placeholder in corner.
+  Zoom control 100%.
+- Show one state panel or small floating legend:
+  "Grid visible"
+  "Axis visible"
+  "Boundary visible"
+  "Camera mode UI-only"
+- Right Inspector can show map-root properties: map.name Runtime Demo, width 10, height 7.
+- Bottom Logs show display state changes: "[12:26:04] viewport: Grid ON", "[12:26:08] viewport: Boundary ON".
+
+Functional cues:
+- These controls affect only edit-mode UI state, not Playtest runtime camera.
+- Keep disabled toggles visually disabled, not active.
+
+Avoid:
+- No fantasy terrain, no monsters, no buildings, no path road.
+- No huge labels over the viewport.

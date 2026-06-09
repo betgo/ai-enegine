@@ -1,0 +1,31 @@
+Use case: ui-mockup
+Asset type: functional UI design state based on an existing editor screenshot
+Input image role: Use docs/img/workspace.png as the composition, layout, density, and dark professional editor style reference.
+
+Primary request:
+Create Function Design 04 for the ai-enegine Editor PRD: Undo/Redo history and safe delete protections.
+
+Preserve from the reference:
+- Same editor layout, dark tool UI, compact workstation panels.
+- Center viewport is a neutral empty scene grid with boundary, not a rendered tower defense map.
+
+State to show:
+- Toolbar Undo and Redo are enabled and highlighted as real actions.
+- Toolbar Delete is enabled for selected wave-1 or tower-1.
+- Show a small History popover near toolbar: "History 12/50", recent entries "Edit tower damage", "Move path point #3", "Delete wave-2", with Undo and Redo controls.
+- Show a Delete confirmation modal or inline panel:
+  Title "Delete tower-1?"
+  Body "This releases slot-a. Operation can be undone."
+  Buttons Cancel and Delete.
+- Also show a disabled delete state for a referenced tower slot in Inspector or Scene Tree: "slot-a is referenced by tower-1".
+- Bottom Logs include "[12:25:12] undo: restored damage 1" and "[12:25:18] delete blocked: slot-a referenced".
+
+Functional cues:
+- Communicate that history only tracks GameDefinition draft changes.
+- Make safety constraints visible and non-alarming.
+- Show delete protections for referenced objects.
+
+Avoid:
+- No destructive red-dominated full screen.
+- No runtime gameplay state in history.
+- No fantasy viewport scene.

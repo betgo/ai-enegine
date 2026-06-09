@@ -1,0 +1,35 @@
+Use case: ui-mockup
+Asset type: functional UI design state based on an existing editor screenshot
+Input image role: Use docs/img/workspace.png as the composition, layout, density, and dark professional editor style reference.
+
+Primary request:
+Create Function Design 03 for the ai-enegine Editor PRD: real operation logs and structured error list with actionable validation issues.
+
+Preserve from the reference:
+- Same professional editor shell and panel structure.
+- Center viewport remains a neutral empty scene grid workspace.
+
+State to show:
+- Bottom panel is split or tabbed with Logs and Errors visible.
+- Logs tab contains real timestamped events:
+  [12:24:35] select: tower-1
+  [12:24:41] edit: damage 1 -> 2
+  [12:24:48] validation: JSON valid
+  [12:25:02] export: game.json ready
+- Errors tab or right section shows structured issues with severity icons:
+  Warning: wave-1 reference check passed
+  Error example: tower-2 slotId missing, action "Select tower-2"
+  Import error example: invalid JSON kept previous draft
+- Error cards include source labels schema, reference, import, runtime.
+- A highlighted error card has an action button "Open Inspector".
+- Playtest button appears disabled if an error is active, with tooltip-like label "Fix errors before Playtest".
+
+Functional cues:
+- Make errors look actionable and tied to objects/tabs.
+- Show logs are UI state only, not game data.
+- Right Inspector can show the currently selected issue target, such as tower-2 placeholder or wave-1.
+
+Avoid:
+- No generic placeholder text.
+- No fantasy edit viewport.
+- No confusing success-only state; include one realistic warning/error design.

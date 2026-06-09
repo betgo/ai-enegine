@@ -1,0 +1,34 @@
+Use case: ui-mockup
+Asset type: functional UI design state based on an existing editor screenshot
+Input image role: Use docs/img/workspace.png as the composition, layout, density, and dark professional editor style reference.
+
+Primary request:
+Create Function Design 05 for the ai-enegine Editor PRD: Playtest workflow, import/export, dirty state, and snapshot readiness.
+
+Preserve from the reference:
+- Same editor shell composition and dark game editor styling.
+- Top menu and toolbar remain compact.
+
+State to show:
+- Toolbar shows Import, Export, Save, Playtest.
+- Status bar shows "Dirty", "Valid", "Snapshot ready", "Selected: tower-1".
+- A compact File/Status popover is open near Export or Playtest:
+  "Draft valid"
+  "Unsaved changes"
+  "Export game.json"
+  "Playtest will use current valid snapshot"
+- Center viewport should show Playtest preview mode on the right half or as an overlay state: a runtime canvas placeholder with HUD, but clearly labeled "Playtest Snapshot".
+- Include Playtest HUD with Mode paused, Status running, Base HP 30/30, Active Monsters 1, Waves wave-1 1/1.
+- Include controls Play, Pause, Step, Reset, Back to Edit.
+- Show a note in status area: "Editing during Playtest will not affect current run".
+- Bottom Logs include entering Playtest and export ready events.
+
+Functional cues:
+- Make it clear edit draft and playtest snapshot are separate.
+- Export requires valid draft.
+- Invalid import would keep previous draft, shown as a small log entry or disabled warning.
+
+Avoid:
+- Do not show Player app chrome.
+- Do not imply runtime state is written into JSON.
+- Keep the UI dense and editor-like, not a game screen.

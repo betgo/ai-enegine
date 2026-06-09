@@ -1,0 +1,30 @@
+Use case: ui-mockup
+Asset type: functional UI design state based on an existing editor screenshot
+Input image role: Use docs/img/workspace.png as the composition, layout, density, and dark professional editor style reference.
+
+Primary request:
+Create Function Design 01 for the ai-enegine Editor PRD: unified object selection, scene tree navigation, and object-level Inspector.
+
+Preserve from the reference:
+- Same full desktop editor layout: top menu, toolbar, left scene tree, center viewport, right inspector, bottom resource/log panel, status bar.
+- Same dark workstation mood, compact panels, professional game editor density.
+- Keep the central viewport as the editor workspace, but make it a neutral empty scene grid instead of a fantasy terrain.
+
+State to show:
+- The selected object is "tower-1".
+- Left Scene Tree has search input and hierarchy: Map Root, Terrain, Paths, main-path, Path Point #1-#4, Tower Slots, slot-a, slot-b, slot-c, Base, Units, monster-basic, Towers, tower-1, Waves, wave-1, Triggers.
+- The "tower-1" row is highlighted in the Scene Tree.
+- Right Inspector title reads "Object Inspector" and shows selected object tower-1, type Tower, ID tower-1.
+- Inspector tabs: Properties active, Gameplay, Map, JSON.
+- Inspector fields are real editable controls: slotId dropdown set to slot-a, range 3, attackIntervalMs 1000, damage 2.
+- Include compact validation chip "JSON valid", dirty chip "Unsaved changes", and reference chip "slot-a available".
+- Status bar shows "Selected: tower-1", "Valid", "Dirty", "History 12/50".
+
+Functional cues:
+- Make Scene Tree, Inspector, and Status Bar clearly share the same selected object.
+- Keep unsupported sections Skills, Items, Events visible but disabled or collapsed.
+- Toolbar Undo, Redo, Delete, Playtest are visible; Publish disabled.
+
+Avoid:
+- No fantasy map in edit viewport, no monsters or path roads in the center.
+- No lorem ipsum, no marketing text, no giant hero title.

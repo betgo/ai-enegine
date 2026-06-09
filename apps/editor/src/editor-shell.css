@@ -1,0 +1,282 @@
+.editor-shell {
+  --panel-bg: #151a22;
+  --panel-bg-strong: #10141b;
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --accent: #2f6eea;
+  --accent-soft: rgba(47, 110, 234, 0.22);
+  --green: #31d66b;
+  --muted: #8f9aaa;
+  display: grid;
+  grid-template-rows: 36px 64px minmax(0, 1fr) 24px;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  color: #edf3f8;
+  background: #0d1015;
+}
+
+.editor-titlebar,
+.editor-toolbar,
+.statusbar {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0)),
+    #11161d;
+}
+
+.editor-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+  border-bottom: 1px solid #0a0d12;
+}
+
+.brand-mark {
+  color: #f1b547;
+  font-family: Georgia, serif;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 8px rgba(241, 181, 71, 0.35);
+}
+
+.titlebar-main {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-width: 0;
+  flex: 1;
+}
+
+.titlebar-main strong {
+  overflow: hidden;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.titlebar-main nav,
+.window-actions,
+.toolbar-group,
+.run-actions {
+  display: flex;
+  align-items: center;
+}
+
+.menu-button {
+  min-height: 28px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: #c8d1dd;
+}
+
+.menu-button:hover,
+.menu-button:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.window-actions {
+  gap: 16px;
+  color: #aab3c0;
+  font-size: 13px;
+}
+
+.editor-toolbar {
+  display: flex;
+  min-width: 0;
+  padding: 6px 14px;
+  border-bottom: 1px solid #0a0d12;
+  box-shadow: inset 0 -1px rgba(255, 255, 255, 0.05);
+}
+
+.toolbar-group {
+  gap: 4px;
+  padding-right: 14px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.tool-button {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  width: 56px;
+  height: 48px;
+  gap: 3px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.tool-button span {
+  color: #dbe6f2;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.tool-button small,
+.terrain-tool-grid small {
+  font-size: 11px;
+}
+
+.tool-button.active,
+.segmented .active,
+.overlay-toggles .active,
+.tree-row.active,
+.inspector-tabs .active,
+.bottom-tabs .active,
+.resource-categories .active {
+  border-color: rgba(76, 139, 255, 0.6);
+  color: #fff;
+  background: linear-gradient(180deg, #255bd5, #1f4cb4);
+}
+
+.run-button,
+.publish-button,
+.creator-button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 40px;
+  padding: 0 18px;
+}
+
+.run-button {
+  border-color: rgba(49, 214, 107, 0.36);
+  background: linear-gradient(180deg, #1d6337, #174629);
+  font-weight: 700;
+}
+
+.run-button span {
+  color: var(--green);
+}
+
+.publish-button {
+  color: #ffd074;
+}
+
+.creator-button .avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #e2a86c, #5f3a22);
+  color: #171014;
+  font-weight: 800;
+}
+
+.editor-workspace {
+  display: grid;
+  grid-template-columns: 240px minmax(500px, 1fr) 330px;
+  min-height: 0;
+  background: #0a0d12;
+}
+
+.left-sidebar,
+.right-inspector,
+.bottom-panel,
+.viewport-shell {
+  min-width: 0;
+  min-height: 0;
+  border-color: var(--panel-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0)),
+    var(--panel-bg);
+}
+
+.left-sidebar {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 220px;
+  border-right: 1px solid var(--panel-border);
+}
+
+.scene-tree,
+.terrain-panel,
+.right-inspector {
+  overflow: auto;
+  padding: 14px;
+}
+
+.scene-tree h2,
+.terrain-panel h2,
+.inspector-object-header h2 {
+  margin: 0 0 12px;
+  font-size: 13px;
+}
+
+.panel-search,
+.resource-actions label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 4px;
+  background: rgba(6, 9, 13, 0.48);
+}
+
+.panel-search input,
+.resource-actions input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+}
+
+.tree-list {
+  display: grid;
+  gap: 2px;
+  margin-top: 12px;
+}
+
+.tree-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  min-height: 24px;
+  padding: 0 8px 0 calc(8px + var(--tree-depth) * 14px);
+  border: 1px solid transparent;
+  color: #c8d1dd;
+  text-align: left;
+  background: transparent;
+}
+
+.tree-icon {
+  color: #7fda83;
+  font-size: 11px;
+}
+
+.tree-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.terrain-panel {
+  border-top: 1px solid var(--panel-border);
+}
+
+.terrain-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.terrain-tool-grid button {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-height: 54px;
+  background: transparent;
+}
+
+.terrain-tool-grid span {
+  color: #80b85c;
+  font-size: 22px;
+}
